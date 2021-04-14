@@ -1,0 +1,19 @@
+<launch>
+  <!-- Arguments -->
+  <arg name="map_file" default="$(find map_provider)/maps/my_map.yaml"/>
+
+
+<!-- Karbot -->
+  <include file="$(find karbot_description)/launch/karbot.launch"/>
+
+  <!-- Map server -->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <!-- motion_controller -->
+  <node pkg="motion_controller" name="motion_controller" type="motion_controller" />	
+  
+  <!-- path_planning -->
+  <node pkg="path_planning" name="path_planning" type="RRT_Star_with_rewiring" />	
+
+
+</launch>
