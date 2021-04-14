@@ -6,6 +6,15 @@
   <xacro:include filename="$(find karbot_description)/urdf/karbot.gazebo" />
   <xacro:include filename="$(find karbot_description)/urdf/macros.xacro" />
 
+
+<link name="base_footprint"/>
+
+<joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+    <origin xyz="0 0 0.010" rpy="0 0 0"/>
+  </joint>
+
   <link name="base_link">
     <visual>
       <geometry>
@@ -181,7 +190,7 @@
     <joint_properties damping="1.0" friction="1.0"/>
   </joint>
 
-  <link name="lidar">
+  <link name="base_scan">
     <visual>
       <geometry>
         <cylinder length="0.055" radius="0.0508"/>
@@ -200,9 +209,9 @@
     </inertial>
   </link>
 
-  <joint name="lidar_hinge" type="fixed">
+  <joint name="scan_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="lidar"/>
+    <child link="base_scan"/>
     <origin xyz="0 0 0.269488"/>
   </joint>
 
