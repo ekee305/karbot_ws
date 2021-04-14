@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=10;
+	static const int rate=100000;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
@@ -690,8 +690,8 @@ int main(int argc, char **argv)
 			temp_path=path_planning.find_path();
 			if(temp_path != path_to_goal){
 				path_to_goal=temp_path;
-				path.action = visualization_msgs::Marker::DELETEALL;
-				marker_pub.publish(path);
+				//path.action = visualization_msgs::Marker::DELETEALL;
+				//marker_pub.publish(path);
 				path.points.clear();
 				//path_planning.print_path();
 				ROS_INFO("found and printed path");
@@ -706,13 +706,12 @@ int main(int argc, char **argv)
 			}		
 		}
 		//moving to goal state
-		/*if ((time(&timer) - begin) > 20){
+		if ((time(&timer) - begin) > 20){
 			path_to_publish.path=path_to_goal;
 			path_pub.publish(path_to_publish);
 			return(1);
-			while(1){}
-			while(1){}
-			get_model_state_client.call(mybot_state);
+
+			/*get_model_state_client.call(mybot_state);
     		x=mybot_state.response.pose.position.x;
     		y=mybot_state.response.pose.position.y;			
 			while((robot_postion.dist_to_goal(x,y,x_goal,y_goal)) > 0.1){
@@ -720,8 +719,8 @@ int main(int argc, char **argv)
     			x=mybot_state.response.pose.position.x;
     			y=mybot_state.response.pose.position.y;
 			}
-			begin = ros::Time::now().toSec();
-		}*/
+			begin = ros::Time::now().toSec();*/
+		}
 
 
 
