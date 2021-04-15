@@ -11,8 +11,7 @@
   <!-- Map server -->
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
 
-  <!-- motion_controller -->
-  <!--node pkg="motion_controller" name="motion_controller" type="motion_controller" /-->
+
 
   <!-- AMCL -->
   <include file="$(find karbot_navigation)/launch/amcl.launch"/>	
@@ -36,5 +35,8 @@
     <node pkg="rviz" type="rviz" name="rviz" required="true"
           args="-d $(find karbot_navigation)/rviz/karbot_navigation.rviz"/>
   </group>
+
+  <!-- motion_controller -->
+  <!--node pkg="motion_controller" name="motion_controller" type="motion_controller" /-->
 
 </launch>

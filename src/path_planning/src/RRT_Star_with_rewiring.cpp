@@ -513,7 +513,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle p;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
-	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
 	ros::Rate r(rate);
 	ros::Duration half_sec(0.5);
 
@@ -530,10 +530,10 @@ int main(int argc, char **argv)
 	}
 
 	// change to be flexible with map size
-	const double upper_x=10; //66;
-	const double lower_x=0; //10;
-	const double upper_y=10; //64;
-	const double lower_y=0; // 9;
+	const double upper_x=66;  //10; //66;
+	const double lower_x=10;  //0; //10;
+	const double upper_y=64;  //10; //64;
+	const double lower_y=9;  //0; // 9;
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
@@ -551,13 +551,13 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.5;
-	static const double x_start=5;
-	static const double y_start=5; 
-	static const double x_goal=9.5;
-	static const double y_goal=9.5;
-	static const double resolution=1.0; 
-	static const double radius_goal=0.225;
+	static const double child_distance=1;
+	static const double x_start=52;
+	static const double y_start=50; 
+	static const double x_goal=29;
+	static const double y_goal=20;
+	static const double resolution=0.05; 
+	static const double radius_goal=0.25;
 	static const int radius_neighbour = 1;
 	RRT path_planning(child_distance,x_start,y_start,resolution,x_goal,y_goal,radius_goal,radius_neighbour);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
@@ -572,7 +572,7 @@ int main(int argc, char **argv)
   
   //marker setyp		
 	visualization_msgs::Marker points, line_list, goal, path_points, path;
-	points.header.frame_id=line_list.header.frame_id= goal.header.frame_id = path_points.header.frame_id = path.header.frame_id = "odom";
+	points.header.frame_id=line_list.header.frame_id= goal.header.frame_id = path_points.header.frame_id = path.header.frame_id = "map";
 	points.header.stamp= line_list.header.stamp = goal.header.stamp = path_points.header.stamp = path.header.stamp = ros::Time::now();
 	points.ns="nodes";
 	goal.ns="goal_node";
@@ -706,7 +706,7 @@ int main(int argc, char **argv)
 			}		
 		}
 		//moving to goal state
-		if ((time(&timer) - begin) > 20){
+		if ((time(&timer) - begin) > 60){
 			path_to_publish.path=path_to_goal;
 			path_pub.publish(path_to_publish);
 			return(1);
