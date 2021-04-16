@@ -10,6 +10,8 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
+#define MAX_SPEED 0.6
+
 std::vector<geometry_msgs::Point> path;
 geometry_msgs::Point position;
 double roll,pitch, yaw;
@@ -74,12 +76,12 @@ public:
     {
         double kps,kpv;
         kps=1.8;
-        kpv=1.8;
+        kpv=1.4;
         update_errors();
         steer_velocity=kps*heading_error;
         velocity=kpv*dist;
-        if (velocity> 0.4){
-            velocity=0.4;
+        if (velocity> MAX_SPEED){
+            velocity=MAX_SPEED;
         }
         /*if (steer_velocity < 0.5){
             steer_velocity=0.5;
@@ -115,9 +117,11 @@ public:
     }
     
     void iterate_reference(){
-        path_index=path_index-1;
-        x_ref=path[path_index].x;
-        y_ref=path[path_index].y;
+        if (path_index!=0){
+                path_index=path_index-1;
+                x_ref=path[path_index].x;
+                y_ref=path[path_index].y;
+        }
     }
 };
 
@@ -138,6 +142,7 @@ int main(int argc, char **argv)
     ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel", 200);
     ros::Subscriber path_sub = n.subscribe("/path", 1000, pathCallback);
     ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
+    bool reached_goal = false;
 
     while(!path_loaded || !first_pose_loaded){
         ros::spinOnce();
@@ -154,17 +159,17 @@ int main(int argc, char **argv)
     control car(yaw,position.x,position.y,path[path_end].x,path[path_end].y);
     car.p_control();
     
-    ros::Rate loop_rate(20);
+    ros::Rate loop_rate(50);
     while (ros::ok())
     {
         ROS_INFO("point=(%lf,%lf,%lf)",position.x,position.y,yaw);
         car.update_variables(position.x,position.y,yaw);
-        if (car.get_dist_to_goal(goal_point)<0.2) {
+        if (car.get_dist_to_goal(path[0]) < 0.25 || reached_goal) {
             ROS_INFO("car at goal");
+            reached_goal=true;
             control_signal.linear.x=0.000000;
             control_signal.angular.z=0.000000;
             control_pub.publish(control_signal);
-            return(1);
         } else {
             if (car.get_dist_error() < 0.2){
                 car.iterate_reference();

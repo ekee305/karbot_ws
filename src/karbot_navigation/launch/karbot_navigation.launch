@@ -37,6 +37,6 @@
   </group>
 
   <!-- motion_controller -->
-  <!--node pkg="motion_controller" name="motion_controller" type="motion_controller" /-->
+  <node pkg="motion_controller" name="motion_controller" type="motion_controller_with_amcl" />
 
 </launch>

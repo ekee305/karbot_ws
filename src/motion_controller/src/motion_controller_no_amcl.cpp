@@ -9,6 +9,8 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
+#define PI 3.14159265359
+
 std::vector<geometry_msgs::Point> path;
 bool path_loaded=false;
 int path_end;
@@ -45,6 +47,12 @@ public:
         y_dif=y_ref-y_pos;
         dist=sqrt((x_dif*x_dif)+(y_dif*y_dif));
         heading_error=atan2(y_dif,x_dif)-z_angle;
+        if (heading_error < -PI){
+            heading_error=heading_error+2*PI;
+        }
+        if (heading_error > PI){
+            heading_error=heading_error-2*PI;
+        }
     }
 
     void update_variables(double x1,double y1,double theta){

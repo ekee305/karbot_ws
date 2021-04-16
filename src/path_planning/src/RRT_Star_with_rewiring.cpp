@@ -14,6 +14,7 @@
 #include <path_planning/path_to_goal.h>
 #include <random>
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PoseStamped.h"
 #include <gazebo_msgs/GetModelState.h>
 #include <time.h>
 
@@ -32,6 +33,8 @@ double resolution_from_map;
 bool map_loaded_flag=1;
 int map_width,map_height;//should change to local variable;
 std::default_random_engine re;
+geometry_msgs::Point goal;
+bool goal_recieved=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) //might be quicker way of loading map by simply equating to data
@@ -45,6 +48,13 @@ void chatterCallback(const nav_msgs::OccupancyGrid &msg) //might be quicker way 
 	map_loaded_flag=0;
 }
 
+void goalCallback(const geometry_msgs::PoseStamped &msg) 
+{
+	goal.x=msg.pose.position.x;
+    goal.y=msg.pose.position.y;
+	goal_recieved=true;
+}
+
 class RRT {
 public:
 	
@@ -56,7 +66,7 @@ private:
     std::vector<geometry_msgs::Point> all_nodes;
 	std::vector<geometry_msgs::Point> path;
 
-	geometry_msgs::Point start, goal;
+	geometry_msgs::Point start;
 
 	struct node 
 	{
@@ -81,8 +91,6 @@ public:
 	RRT(double d, double x_start, double y_start, double r,double x_goal, double y_goal,double goal_r,double neighbour_r) : distance (d), resolution(r),goal_radius(goal_r), neighbour_radius(neighbour_r) {
 		start.x=x_start;
 		start.y=y_start;		
-		goal.x=x_goal;
-		goal.y=y_goal;
 		srand((unsigned int)time(NULL));
 		I=0;
 		create_root();
@@ -292,8 +300,8 @@ public:
 
 	void is_goal_found(){
 		double x_diff,y_diff;
-		x_diff=goal.x-all_nodes[I-1].x;
-		y_diff=goal.y-all_nodes[I-1].y;
+		x_diff=goal.x-node_list[I-1]->point.x;
+		y_diff=goal.y-node_list[I-1]->point.y;
 		double dist_to_goal=sqrt(pow(y_diff,2)+pow(x_diff,2));
 		if(dist_to_goal<goal_radius){
 			//ROS_INFO("goal found");
@@ -322,6 +330,7 @@ public:
 			path_cost=goal_node->cost;
 			geometry_msgs::Point temp_point;
 			path.clear();
+			path.push_back(goal);
 			node* node_ptr= goal_node;
 			temp_point.x=node_ptr->point.x;
 			temp_point.y=node_ptr->point.y;
@@ -511,16 +520,14 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
 	ros::NodeHandle p;
+	ros::NodeHandle g;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
+	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
 	ros::Rate r(rate);
 	ros::Duration half_sec(0.5);
 
-
-	bool service_ready = false;
-    gazebo_msgs::GetModelState mybot_state;
-	double x,y;
 	path_planning::path_to_goal path_to_publish;
 
 	//map setup
@@ -551,14 +558,14 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=1;
+	static const double child_distance=0.5;
 	static const double x_start=52;
 	static const double y_start=50; 
 	static const double x_goal=29;
 	static const double y_goal=20;
 	static const double resolution=0.05; 
-	static const double radius_goal=0.25;
-	static const int radius_neighbour = 1;
+	static const double radius_goal=0.5;
+	static const int radius_neighbour = 2;
 	RRT path_planning(child_distance,x_start,y_start,resolution,x_goal,y_goal,radius_goal,radius_neighbour);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	int index_of_closest=0;
@@ -571,33 +578,33 @@ int main(int argc, char **argv)
 	  
   
   //marker setyp		
-	visualization_msgs::Marker points, line_list, goal, path_points, path;
-	points.header.frame_id=line_list.header.frame_id= goal.header.frame_id = path_points.header.frame_id = path.header.frame_id = "map";
-	points.header.stamp= line_list.header.stamp = goal.header.stamp = path_points.header.stamp = path.header.stamp = ros::Time::now();
+	visualization_msgs::Marker points, line_list, goal_marker, path_points, path;
+	points.header.frame_id=line_list.header.frame_id= goal_marker.header.frame_id = path_points.header.frame_id = path.header.frame_id = "map";
+	points.header.stamp= line_list.header.stamp = goal_marker.header.stamp = path_points.header.stamp = path.header.stamp = ros::Time::now();
 	points.ns="nodes";
-	goal.ns="goal_node";
+	goal_marker.ns="goal_node";
 	line_list.ns="edges";
 	path_points.ns="path_points_nodes";
 	path.ns="path_nodes";
-	points.action=line_list.action=goal.action = path_points.action = path.action = visualization_msgs::Marker::ADD;
-	points.pose.orientation.w=line_list.pose.orientation.w=goal.pose.orientation.w= path_points.pose.orientation.w = path.pose.orientation.w = 1.0;
+	points.action=line_list.action=goal_marker.action = path_points.action = path.action = visualization_msgs::Marker::ADD;
+	points.pose.orientation.w=line_list.pose.orientation.w=goal_marker.pose.orientation.w= path_points.pose.orientation.w = path.pose.orientation.w = 1.0;
 
 	points.id=0;
 	line_list.id=1;
-	goal.id=3;
+	goal_marker.id=3;
 	path_points.id=4;
 	path.id=5;
 
 	points.type = visualization_msgs::Marker::POINTS;
 	line_list.type = visualization_msgs::Marker::LINE_LIST;
-	goal.type = visualization_msgs::Marker::POINTS;
+	goal_marker.type = visualization_msgs::Marker::POINTS;
 	path_points.type = visualization_msgs::Marker::POINTS;
 	path.type = visualization_msgs::Marker::LINE_LIST;
 
 	points.scale.x = 0.05;
 	points.scale.y = 0.05;
-	goal.scale.x = 0.1;
-	goal.scale.y = 0.1;
+	goal_marker.scale.x = 0.1;
+	goal_marker.scale.y = 0.1;
 	path_points.scale.x = 0.1;
 	path_points.scale.y = 0.1;
 
@@ -606,8 +613,8 @@ int main(int argc, char **argv)
 
 	points.color.b = 1.0f;
 	points.color.a = 1.0;
-	goal.color.g = 1.0f;
-	goal.color.a = 1.0;
+	goal_marker.color.g = 1.0f;
+	goal_marker.color.a = 1.0;
 	path_points.color.a= 1.0;
 	path_points.color.r = 1.0f;
 	
@@ -616,34 +623,24 @@ int main(int argc, char **argv)
 	line_list.color.g = 1.0;
 	line_list.color.a = 1.0;
 
-	//start postion for tree
+
+ 
+	while (!goal_recieved){
+		ROS_INFO("Please select goal point");
+		ros::spinOnce();
+	}
+	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 
 	points.points.push_back(path_planning.get_start());
-	goal.points.push_back(path_planning.get_goal());
+	goal_marker.points.push_back(path_planning.get_goal());
 	
 
-	while (marker_pub.getNumSubscribers() < 1) {	
-		if (!ros::ok())
-			{
-				return 0;
-			}
-		ROS_WARN_ONCE("Please create a subscriber to the marker");
-		ros::spinOnce();
-		sleep(1);
-	}
-
-	
 	//timer setup
 	time_t timer;
 	int begin = time(&timer);
-  
-  
+    
 	while(ros::ok()){
-		
 		ros::spinOnce();
-
-
-
 
 		//find path state
 		rand_point=path_planning.get_rand_point(unif_x,unif_y);
@@ -660,7 +657,6 @@ int main(int argc, char **argv)
 				path_planning.rewire_neighbours();
 				
 				//marker updates
-				//if (!path_planning.get_goal_found()){
 				points.action = visualization_msgs::Marker::DELETEALL;
 				line_list.points.clear();
 				points.points.clear();
@@ -673,14 +669,7 @@ int main(int argc, char **argv)
 				}
 				marker_pub.publish(points);
 				marker_pub.publish(line_list);
-				/*line_list.points.push_back(path_planning.get_all_nodes_value(index_of_lowest_cost_neighbour));
-				line_list.points.push_back(next_point);
-
-				marker_pub.publish(goal);
-				marker_pub.publish(line_list);
-				//ROS_INFO("Point placement complete");
-				//ROS_INFO(" ");*/
-				//}
+				marker_pub.publish(goal_marker);
 			}
 		} 
 		path_planning.is_goal_found();
@@ -690,12 +679,8 @@ int main(int argc, char **argv)
 			temp_path=path_planning.find_path();
 			if(temp_path != path_to_goal){
 				path_to_goal=temp_path;
-				//path.action = visualization_msgs::Marker::DELETEALL;
-				//marker_pub.publish(path);
 				path.points.clear();
-				//path_planning.print_path();
 				ROS_INFO("found and printed path");
-
 				path.action = visualization_msgs::Marker::ADD;
 				for (int i = path_planning.path_length()-2; i >=0 ;i--){
 						path.points.push_back(path_planning.get_path_point(i));
@@ -706,20 +691,11 @@ int main(int argc, char **argv)
 			}		
 		}
 		//moving to goal state
-		if ((time(&timer) - begin) > 60){
+		if ((time(&timer) - begin) > 45 && path_planning.get_goal_found()){
 			path_to_publish.path=path_to_goal;
 			path_pub.publish(path_to_publish);
 			return(1);
 
-			/*get_model_state_client.call(mybot_state);
-    		x=mybot_state.response.pose.position.x;
-    		y=mybot_state.response.pose.position.y;			
-			while((robot_postion.dist_to_goal(x,y,x_goal,y_goal)) > 0.1){
-				get_model_state_client.call(mybot_state);
-    			x=mybot_state.response.pose.position.x;
-    			y=mybot_state.response.pose.position.y;
-			}
-			begin = ros::Time::now().toSec();*/
 		}
 
 
