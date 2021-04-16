@@ -5,7 +5,7 @@
 
 <arg name="open_rviz" default="true"/>
 
-<!-- Karbot -->
+<!-- Karbot spawn -->
   <include file="$(find karbot_description)/launch/karbot.launch"/>
 
   <!-- Map server -->
@@ -23,12 +23,6 @@
   <node name="global_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
     <rosparam file="$(find costmap_2d)/params/global_costmap_params.yaml" command="load"  ns="costmap" />
   </node>
-
-<!-- Run the local costmap node -->
-<!-- Temporarily disabled -->
-  <!--node name="local_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
-    <rosparam file="$(find costmap_2d)/launch/local_costmap_params.yaml" command="load"  ns="costmap"/>
-  </node-->
 
  <!-- rviz -->
   <group if="$(arg open_rviz)"> 
