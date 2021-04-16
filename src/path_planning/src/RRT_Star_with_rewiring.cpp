@@ -1,3 +1,8 @@
+//change calculate cost function to ensure cost is updated for the rest of tree after rewiring
+// add grid based spacial indexing
+//replace with reolution that is given with map data.
+
+
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -128,7 +133,7 @@ public:
 		node_list.push_back(new_node);
 	}
 
-	double calculate_cost (node* parent, node* child)
+	double calculate_cost (node* parent, node* child) //
 	{
 		double x_diff;
 		double y_diff;
@@ -249,9 +254,6 @@ public:
 		node* test_node=node_list.back();
 		double total_cost;
 		for (int i = 0;i<neighbours.size();i++){
-			/*test_node->point.x-neighbours[i]->point.x;
-			y_diftest_node->point.y-neighbours[i]->point.y;
-			cost_to_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));*/
 			total_cost=calculate_cost(test_node,neighbours[i]);
 			if (total_cost < neighbours[i]->cost){
 				remove_child_from_parent(neighbours[i]);
@@ -261,8 +263,6 @@ public:
 		}
 		return;
 	} 
-
-
 
 	int find_closest(geometry_msgs::Point random_point){
 		int near=0;
@@ -283,7 +283,7 @@ public:
 	
 	path_planning::grid_cell find_grid_cell(geometry_msgs::Point new_point) {
 		path_planning::grid_cell grid;
-		grid.x= int(new_point.x/resolution); //replace with reolution that is given with occupancy grid data.
+		grid.x= int(new_point.x/resolution); 
 		grid.y= int(new_point.y/resolution);
 		//ROS_INFO("grid is (%d,%d)",grid.x,grid.y);
 		return(grid);
@@ -640,19 +640,19 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 		ros::spinOnce();
 
-		//find path state
+		//find rand point
 		rand_point=path_planning.get_rand_point(unif_x,unif_y);
 		index_of_closest=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
 		next_point=path_planning.new_point(path_planning.get_all_nodes_value(index_of_closest),rand_point); // find point that could be added to tree
 		map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
 		//ROS_INFO("Array value is %d",array_grid);
 
-		//if statement to implement obstacle avoidance, could make function in RRT class to do this;
+		//if statement to implement obstacle avoidance, make function in RRT class to do this;
 		if (map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1) {
-			index_of_lowest_cost_neighbour=path_planning.check_neighbours(next_point,index_of_closest); //check if line crosses obstacle in this function
+			index_of_lowest_cost_neighbour=path_planning.check_neighbours(next_point,index_of_closest); //find nearest suitable neighbour
 			if(index_of_lowest_cost_neighbour !=-1){	//only enter if suitable neighbour found							
-				path_planning.add_node_to_tree(index_of_lowest_cost_neighbour,next_point);
-				path_planning.rewire_neighbours();
+				path_planning.add_node_to_tree(index_of_lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
+				path_planning.rewire_neighbours(); // rewires neighbours of new point;
 				
 				//marker updates
 				points.action = visualization_msgs::Marker::DELETEALL;

@@ -21,3 +21,4 @@ obstacle_layer:
   observation_sources: scan
   scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true, inf_is_valid: true, observation_persistence: 0.0}
 
+
