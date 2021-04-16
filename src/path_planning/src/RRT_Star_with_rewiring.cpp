@@ -88,7 +88,7 @@ private:
 
 
 public:
-	RRT(double d, double x_start, double y_start, double r,double x_goal, double y_goal,double goal_r,double neighbour_r) : distance (d), resolution(r),goal_radius(goal_r), neighbour_radius(neighbour_r) {
+	RRT(double d, double x_start, double y_start, double r, double goal_r,double neighbour_r) : distance (d), resolution(r),goal_radius(goal_r), neighbour_radius(neighbour_r) {
 		start.x=x_start;
 		start.y=y_start;		
 		srand((unsigned int)time(NULL));
@@ -559,14 +559,12 @@ int main(int argc, char **argv)
   
   //initialize RRT object and variables
 	static const double child_distance=0.5;
-	static const double x_start=52;
+	static const double x_start=52; //change to amcl postion;
 	static const double y_start=50; 
-	static const double x_goal=29;
-	static const double y_goal=20;
 	static const double resolution=0.05; 
 	static const double radius_goal=0.5;
 	static const int radius_neighbour = 2;
-	RRT path_planning(child_distance,x_start,y_start,resolution,x_goal,y_goal,radius_goal,radius_neighbour);  //would intialize path planner to have root at robot base
+	RRT path_planning(child_distance,x_start,y_start,resolution,radius_goal,radius_neighbour);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	int index_of_closest=0;
 	int index_of_lowest_cost_neighbour=0;
