@@ -6,6 +6,14 @@
   <xacro:include filename="$(find karbot_description)/urdf/karbot.gazebo" />
   <xacro:include filename="$(find karbot_description)/urdf/macros.xacro" />
 
+<link name="base_footprint"/>
+
+<joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+    <origin xyz="0 0 0.010" rpy="0 0 0"/>
+  </joint>
+
   <link name="base_link">
     <visual>
       <geometry>
@@ -27,7 +35,7 @@
     </inertial>
   </link>
 
-  <!--link name="upper_chassis">
+  <link name="upper_chassis">
     <visual>
       <geometry>
         <cylinder length="0.601382" radius="0.295051"/>
@@ -40,18 +48,18 @@
         <cylinder length="0.601382" radius="0.295051"/>
       </geometry>
     </collision>
-    <inertial>
+    <!--inertial>
       <origin xyz="0 0 0.602679"/>	
       <mass value="1"/>
       <xacro:cylinder_inertia mass="1" r="0.295051" l="0.601382" />
-    </inertial>
+    </inertial-->
   </link>
 
   <joint name="upper_chassis_hinge" type="fixed">
     <parent link="base_link"/>
     <child link="upper_chassis"/>
     <origin rpy="0 0 0" xyz="0 0 0.602679"/>
-  </joint-->
+  </joint>
 
   <link name="front_caster">
     <visual>
@@ -181,7 +189,7 @@
     <joint_properties damping="1.0" friction="1.0"/>
   </joint>
 
-  <link name="lidar">
+  <link name="base_scan">
     <visual>
       <geometry>
         <cylinder length="0.055" radius="0.0508"/>
@@ -200,11 +208,89 @@
     </inertial>
   </link>
 
-  <joint name="lidar_hinge" type="fixed">
+  <joint name="scan_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="lidar"/>
+    <child link="base_scan"/>
     <origin xyz="0 0 0.269488"/>
   </joint>
+
+  <link name="arrow">
+    <visual>
+      <geometry>
+       <box size="0.2 0.05 0.000010"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    <material name="blue"/>
+    </visual>
+
+    <!--collision name = "collision_arrow">
+      <origin rpy="0 0 0" xyz="0.1 0 0.241993"/>>	
+      <geometry>
+       <box size="0.2 0.05 0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <origin rpy="0 0 0" xyz="0.1 0 0.241993"/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+    </inertial-->
+  </link>
+
+  <joint name="arrow_hinge" type="fixed">
+    <parent link="base_link"/>
+    <child link="arrow"/>
+    <origin rpy="0 0 0" xyz="0.15 0 0.91"/>
+  </joint>
+
+<xacro:macro name="front_pillars" params="prefix reflect">
+    <link name="front_${prefix}_pillar">
+        <visual>
+            <geometry>
+             <cylinder length="0.075" radius="0.009"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </visual>
+        <collision>
+            <geometry>
+             <cylinder length="0.075" radius="0.009"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </collision>
+    </link>
+
+   <joint name="front_${prefix}_pillar_hinge" type="fixed">
+       <parent link="base_link"/>
+       <child link="front_${prefix}_pillar"/>
+       <origin xyz="${reflect*0.20} 0.20 0.269488" />
+    </joint>
+</xacro:macro>
+<xacro:front_pillars prefix="right" reflect="1" />
+<xacro:front_pillars prefix="left" reflect="-1" />
+
+<xacro:macro name="rear_pillars" params="prefix reflect">
+    <link name="rear_${prefix}_pillar">
+        <visual>
+            <geometry>
+             <cylinder length="0.075" radius="0.009"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </visual>
+        <collision>
+            <geometry>
+             <cylinder length="0.075" radius="0.009"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </collision>
+    </link>
+
+   <joint name="rear_${prefix}_pillar_hinge" type="fixed">
+       <parent link="base_link"/>
+       <child link="rear_${prefix}_pillar"/>
+       <origin xyz="${reflect*0.20} -0.20 0.269488" />
+    </joint>
+</xacro:macro>
+<xacro:rear_pillars prefix="right" reflect="1" />
+<xacro:rear_pillars prefix="left" reflect="-1" />
 
 </robot>
 
