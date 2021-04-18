@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(motion_controller)
+project(karbot_slam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,17 +7,7 @@ project(motion_controller)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  actionlib_msgs
-  geometry_msgs
-  message_generation
-  nav_msgs
-  roscpp
-  rospy
-  std_msgs
-  visualization_msgs
-  path_planning
-)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -76,7 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   actionlib_msgs#   geometry_msgs#   nav_msgs#   std_msgs#   visulization_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -110,8 +100,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES motion_controller
-#CATKIN_DEPENDS path_planning #actionlib_msgs geometry_msgs nav_msgs roscpp rospy std_msgs visulization_msgs
+#  LIBRARIES karbot_slam
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -123,12 +113,12 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  ${catkin_INCLUDE_DIRS}
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/motion_controller.cpp
+#   src/${PROJECT_NAME}/karbot_slam.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -136,14 +126,10 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-
-
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/motion_controller_node.cpp)
-add_executable(motion_controller_no_amcl src/motion_controller_no_amcl.cpp)
-add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
+# add_executable(${PROJECT_NAME}_node src/karbot_slam_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,15 +140,11 @@ add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(motion_controller_no_amcl ${catkin_EXPORTED_TARGETS})
-add_dependencies(motion_controller_with_amcl ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(motion_controller_no_amcl   ${catkin_LIBRARIES} )
-target_link_libraries(motion_controller_with_amcl   ${catkin_LIBRARIES} )
 
 #############
 ## Install ##
@@ -211,7 +193,7 @@ target_link_libraries(motion_controller_with_amcl   ${catkin_LIBRARIES} )
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_motion_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_karbot_slam.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
