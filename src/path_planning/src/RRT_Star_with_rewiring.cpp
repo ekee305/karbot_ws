@@ -537,10 +537,10 @@ int main(int argc, char **argv)
 	}
 
 	// change to be flexible with map size
-	const double upper_x=66;  //10; //66;
-	const double lower_x=10;  //0; //10;
+	const double upper_x=32;  //10; //66;
+	const double lower_x=7;  //0; //10;
 	const double upper_y=64;  //10; //64;
-	const double lower_y=9;  //0; // 9;
+	const double lower_y=7;  //0; // 9;
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
@@ -558,9 +558,9 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.5;
-	static const double x_start=52; //change to amcl postion;
-	static const double y_start=50; 
+	static const double child_distance=0.75;
+	static const double x_start=19.8; //change to amcl postion;
+	static const double y_start=52; 
 	static const double resolution=0.05; 
 	static const double radius_goal=0.5;
 	static const int radius_neighbour = 2;

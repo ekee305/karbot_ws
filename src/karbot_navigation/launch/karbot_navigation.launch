@@ -1,7 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find map_provider)/maps/test_map.yaml"/>
-
+  <arg name="map_file" default="$(find map_provider)/maps/hospital_floorplan.yaml"/>
 
 <arg name="open_rviz" default="true"/>
 

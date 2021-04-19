@@ -1,6 +1,6 @@
 <launch>
 
-  <arg default="$(find map_provider)/maps/test_map.yaml" name="map_file"/>
+  <arg default="$(find map_provider)/maps/hospital_floorplan.yaml" name="map_file"/>
 
 
   <!-- Run the map server -->
