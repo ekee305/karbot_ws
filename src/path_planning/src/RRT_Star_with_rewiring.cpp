@@ -290,7 +290,7 @@ public:
 	}
 
 	int convert_grid_cell (path_planning::grid_cell grid) {
-		int map_array_value=grid.y*map_width*resolution+grid.x;
+		int map_array_value=grid.y*map_width+grid.x;
 		return(map_array_value);
 	}
 
@@ -560,7 +560,7 @@ int main(int argc, char **argv)
   //initialize RRT object and variables
 	static const double child_distance=0.75;
 	static const double x_start=19.8; //change to amcl postion;
-	static const double y_start=52; 
+	static const double y_start=52.4; 
 	static const double resolution=0.05; 
 	static const double radius_goal=0.5;
 	static const int radius_neighbour = 2;

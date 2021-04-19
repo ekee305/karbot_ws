@@ -146,6 +146,8 @@ add_executable(Struct_RRT src/Struct_RRT.cpp)
 add_executable(RRT_Star src/RRT_Star.cpp)
 add_executable(Line_obstacle_test src/Line_obstacle_test.cpp)
 add_executable(RRT_Star_with_rewiring src/RRT_Star_with_rewiring.cpp)
+add_executable(RRT_Star_efficiency_improvements src/RRT_Star_efficiency_improvements.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -163,6 +165,7 @@ add_dependencies(RRT_Star_with_rewiring ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 add_dependencies(RRT_Star ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(Line_obstacle_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(Struct_RRT ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RRT_Star_efficiency_improvements ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
@@ -178,6 +181,8 @@ target_link_libraries(RRT_Star_with_rewiring ${catkin_LIBRARIES})
 target_link_libraries(RRT_Star ${catkin_LIBRARIES})
 target_link_libraries(Line_obstacle_test ${catkin_LIBRARIES})
 target_link_libraries(Struct_RRT ${catkin_LIBRARIES})
+target_link_libraries(RRT_Star_efficiency_improvements ${catkin_LIBRARIES})
+target_link_libraries(RRT_Star_with_rewiring ${catkin_LIBRARIES})
 
 
 #############

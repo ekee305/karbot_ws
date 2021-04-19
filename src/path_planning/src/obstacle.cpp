@@ -26,7 +26,7 @@ void chatterCallback(const nav_msgs::OccupancyGrid &msg)
 geometry_msgs::Point find_grid_cell(geometry_msgs::Point new_point);
 double get_rand_point(std::uniform_real_distribution<double> unif);
 
-
+std::vector<geometry_msgs::Point> map[10][10];
 
 
 
@@ -37,20 +37,23 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "obstacle");
 	ros::NodeHandle n;
   std::uniform_real_distribution<double> unif(1,10);
-  /*geometry_msgs::Point test;
-  test.x=9.5;
-  test.y=9.5; 
+  geometry_msgs::Point test1;
+  test1.x=0.5;
+  test1.y=0.5; 
 
-  geometry_msgs::Point grid_cell;*/
+  geometry_msgs::Point test2;
+  test2.x=9.5;
+  test2.y=9.5; 
+
+  map[0][0].push_back(test1);
+  map[0][0].push_back(test2);
 
 
-
-  ros::Subscriber sub = n.subscribe("map", 1000, chatterCallback);
-  while (1) {
-    ros::spinOnce();
-    ROS_INFO("random Number = %lf",get_rand_point(unif));
-  }
   //ros::spin();
+  for (int i =0; i < map[0][0].size();i++){
+    ROS_INFO("test point in grid (0,0) is (%lf,%lf)",map[0][0].at(i).x,map[0][0].at(i).y);
+  }
+ 
 }
 
 geometry_msgs::Point find_grid_cell(geometry_msgs::Point new_point) {
