@@ -68,4 +68,8 @@
     </sensor>
   </gazebo>
 
+  <gazebo reference="arrow">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
 </robot>
