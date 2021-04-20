@@ -155,7 +155,7 @@ public:
 		return(cost);
 	}
 
-	double get_cost(int index)
+	/*double get_cost(int index)
 	{
 		double cost;
 		if(node_list[index]->parent!=NULL){		
@@ -165,7 +165,7 @@ public:
 			cost=0;
 		}
 		return(cost);
-	}
+	}*/
 
 	double get_cost(node *temp_node)
 	{
@@ -312,18 +312,18 @@ public:
 				neighbours[i]->cost=total_cost;	
 			}
 		}
-		ROS_INFO(" ");
+		//ROS_INFO(" ");
 		return;
 	} 
 
 	node* find_closest(geometry_msgs::Point random_point){
-		ROS_INFO("I've entered find_closest");
+		//ROS_INFO("I've entered find_closest");
 		int near=0;
 		double temp=0;
 		double mag=1000000;
 		double x_diff,y_diff;
 		node* nearest_node;
-		ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
+		//ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
 		find_neighbours(random_point);
 		/*for(int i = 0;i<node_list.size();i++){
 			x_diff=random_point.x-node_list[i]->point.x;
@@ -346,7 +346,7 @@ public:
 				nearest_node=neighbours[i];
 			}    
 		}
-		ROS_INFO("closest node is (%.2lf,%.2lf)",nearest_node->point.x,nearest_node->point.y);
+		//ROS_INFO("closest node is (%.2lf,%.2lf)",nearest_node->point.x,nearest_node->point.y);
 
 		return (nearest_node);  
 	}
@@ -638,7 +638,6 @@ public:
 		}*/
 	}
 
-	//void find_adjacent
 };
 
 class robot_pose{
@@ -664,7 +663,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=100;
+	static const int rate=100000;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
