@@ -1,6 +1,7 @@
 // add grid based spacial indexing
 //replace with reolution that is given with map data.
 //fix hard coded grid width
+//fix rand point cause it ain't rand
 
 
 
@@ -28,6 +29,7 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
+#define GRID_WIDTH 10
 
 //test for branch
 //lol
@@ -60,6 +62,16 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
 	goal_recieved=true;
 }
 
+
+struct node 
+{
+	int ID;
+	geometry_msgs::Point point; 
+	double cost;
+	node* parent;
+	std::vector<node*> children;
+};
+
 class RRT {
 public:
 	
@@ -74,16 +86,7 @@ private:
 	std::vector<geometry_msgs::Point> path;
 
 
-	geometry_msgs::Point start;
-
-	struct node 
-	{
-		int ID;
-		geometry_msgs::Point point; 
-		double cost;
-		node* parent;
-		std::vector<node*> children;
-	};	
+	geometry_msgs::Point start;	
 
 	node* root;
 	node* goal_node;
@@ -117,21 +120,24 @@ public:
 		new_node->point.y=start.y;
 		all_nodes.push_back(start);
 		node_list.push_back(new_node);
+		add_to_spatial_index(new_node);
 		root = new_node;
 	}
 
-	void add_node_to_tree(int index, geometry_msgs::Point new_point) 
+	node* add_node_to_tree(node* parent, geometry_msgs::Point new_point) 
 	{
-	
+		//ROS_INFO("I've entered add_node_to_tree");
 		node* new_node = new node;			
 		new_node->ID = I++;
 		new_node->point.x=new_point.x;
 		new_node->point.y=new_point.y;
-		new_node->parent = node_list[index]; //use postion of parent in all_nodes to find pointer to the 
-		new_node->cost = calculate_cost(node_list[index],new_node);
-		update_children(index, new_node);
+		new_node->parent = parent; //use postion of parent in all_nodes to find pointer to the 
+		new_node->cost = calculate_cost(parent,new_node);
+		update_children(parent, new_node);
 		all_nodes.push_back(new_point);
 		node_list.push_back(new_node);
+		add_to_spatial_index(new_node);
+		return(new_node);
 	}
 
 	double calculate_cost (node* parent_node, node* child_node) //
@@ -173,9 +179,9 @@ public:
 		return(cost);
 	}
 
-	void update_children(int index, node *child) 
+	void update_children(node* parent, node *child) 
 	{
-		node_list[index]->children.push_back(child);
+		parent->children.push_back(child);
 	}
 
 	void remove_child_from_parent(node *child){
@@ -234,24 +240,26 @@ public:
 		return (point);
 	}
 	
- 	geometry_msgs::Point new_point(geometry_msgs::Point closest, geometry_msgs::Point random_point){
+ 	geometry_msgs::Point new_point(node* closest, geometry_msgs::Point random_point){
+		//ROS_INFO("I've entered new_point");
 		double angle,x,y;
-		x=random_point.x-closest.x;
-		y=random_point.y-closest.y;
+		x=random_point.x-closest->point.x;
+		y=random_point.y-closest->point.y;
 		geometry_msgs::Point next_point;
 		angle=atan2(y,x);
-		next_point.x=closest.x+distance*cos(angle);
-		next_point.y=closest.y+distance*sin(angle);
-		//ROS_INFO("parent is (%f,%f), child is (%f,%f)",parent.x,parent.y,child.x, child.y); 
+		next_point.x=closest->point.x+distance*cos(angle);
+		next_point.y=closest->point.y+distance*sin(angle);
+		//ROS_INFO("parent is (%f,%f), child is (%f,%f)",closest->point.x,closest->point.y,next_point.x, next_point.y);
 		return(next_point);
 	}
 
-	int check_neighbours (geometry_msgs::Point new_point,int index_of_closest){
-		neighbours.clear();
+	node* check_neighbours (geometry_msgs::Point new_point){
+		//ROS_INFO("I've entered check neighbours");
 		double cost_from_neighbour,total_cost;
 		double lowest_cost=1000000;
 		double x_diff,y_diff;
-		int closest_neighbour_index=-1;
+		//find_neighbours(new_point);
+		node* closest_neighbour=NULL;
 		for(int i = 0;i<all_nodes.size();i++){
 			x_diff=new_point.x-all_nodes[i].x;
 			y_diff=new_point.y-all_nodes[i].y;
@@ -269,16 +277,31 @@ public:
 			cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
 			total_cost=get_cost(neighbours[i])+cost_from_neighbour;
 			if (total_cost < lowest_cost){
-				closest_neighbour_index=neighbours[i]->ID;
+				closest_neighbour=neighbours[i];
 				lowest_cost=total_cost;
 	
 			}
 		}
-		return(closest_neighbour_index);
+		/*for (int i = 0;i<neighbours.size();i++){
+			x_diff=new_point.x-neighbours[i]->point.x;
+			y_diff=new_point.y-neighbours[i]->point.y;
+			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
+				cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
+				if(cost_from_neighbour <= neighbour_radius && !check_line_obstacle(new_point,neighbours[i]->point)){
+					total_cost=get_cost(neighbours[i])+cost_from_neighbour;
+					if (total_cost < lowest_cost){
+						closest_neighbour=neighbours[i];
+						lowest_cost=total_cost;
+					}
+				}
+			}	 
+		}*/
+
+		return(closest_neighbour);
 	}
 	
-	void rewire_neighbours () {
-		node* test_node=node_list.back();
+	void rewire_neighbours (node* test_node) {
+		//ROS_INFO("I've entered rewire neighbours");
 		double total_cost;
 		for (int i = 0;i<neighbours.size();i++){
 			total_cost=calculate_cost(test_node,neighbours[i]);
@@ -288,29 +311,96 @@ public:
 				neighbours[i]->cost=total_cost;	
 			}
 		}
+		ROS_INFO(" ");
 		return;
 	} 
 
-	int find_closest(geometry_msgs::Point random_point){
+	node* find_closest(geometry_msgs::Point random_point){
+		ROS_INFO("I've entered find_closest");
 		int near=0;
 		double temp=0;
 		double mag=1000000;
 		double x_diff,y_diff;
-
-
-
-
-		
-		for(int i = 0;i<all_nodes.size();i++){
-			x_diff=random_point.x-all_nodes[i].x;
-			y_diff=random_point.y-all_nodes[i].y;
+		node* nearest_node;
+		ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
+		find_neighbours(random_point);
+		/*for(int i = 0;i<node_list.size();i++){
+			x_diff=random_point.x-node_list[i]->point.x;
+			y_diff=random_point.y-node_list[i]->point.y;
 			temp=sqrt(pow(y_diff,2)+pow(x_diff,2));
 			if(temp<mag){
 				mag=temp;
-				near=i;
+				nearest_node=node_list[i];
+			}    
+		}*/
+
+		for(int i = 0;i<neighbours.size();i++){
+			//ROS_INFO("checked neighbours (%.2lf,%.2lf)",neighbours[i]->point.x,neighbours[i]->point.y);
+			x_diff=random_point.x-neighbours[i]->point.x;
+			y_diff=random_point.y-neighbours[i]->point.y;
+			temp=sqrt(pow(y_diff,2)+pow(x_diff,2));
+
+			if(temp<mag){
+				mag=temp;
+				nearest_node=neighbours[i];
 			}    
 		}
-		return (near);  
+		ROS_INFO("closest node is (%.2lf,%.2lf)",nearest_node->point.x,nearest_node->point.y);
+
+		return (nearest_node);  
+	}
+
+	void find_neighbours(geometry_msgs::Point temp_point){ //add exception handling about if no point found
+		//ROS_INFO("I've entered find_neighbours");
+		int lower_x_grid,upper_x_grid,lower_y_grid,upper_y_grid;
+		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_point);
+		//ROS_INFO("test point is (%lf,%lf)",temp_point.x,temp_point.y);
+		//ROS_INFO("grid is (%d,%d)",grid.x,grid.y);
+		neighbours.clear();
+
+		/*for (int i =0; i< node_list.size();i++){
+			ROS_INFO("nodelist %d (%.2lf,%.2lf)",i,node_list[i]->point.x,node_list[i]->point.y); 
+		}*/
+		int search_width=0;
+		while(neighbours.empty()){
+			search_width++;
+			if((grid.x-search_width)<0){
+				lower_x_grid=0;
+			} else {
+				lower_x_grid=grid.x-search_width;
+			}
+			if((grid.x+search_width)>(GRID_WIDTH-1)){
+				upper_x_grid=GRID_WIDTH-1;
+			} else{
+				upper_x_grid=grid.x+search_width;
+			}
+			if((grid.y-search_width)<0){
+				lower_y_grid=0;
+			} else {
+				lower_y_grid=grid.y-search_width;
+			}
+			if((grid.y+search_width)>(GRID_WIDTH-1)){
+				upper_y_grid=GRID_WIDTH-1;
+			} else {
+				upper_y_grid=grid.y+search_width;
+			}
+			//ROS_INFO("X range (%d,%d)",lower_x_grid,upper_x_grid);
+			//ROS_INFO("Y range (%d,%d)",lower_y_grid,upper_y_grid);
+			
+			for(int i=lower_x_grid;i <= upper_x_grid;i++){
+				for (int j=lower_y_grid;j <=upper_y_grid;j++){
+					//ROS_INFO("Checking grid (%d,%d)",i,j);
+					for(int k=0; k < spatial_grid[i][j].size();k++){
+						//ROS_INFO("spacial_index (%d,%d) point (%lf,%lf)",i,j,spatial_grid[i][j].at(k)->point.x,spatial_grid[i][j].at(k)->point.y);
+						neighbours.push_back(spatial_grid[i][j].at(k));
+					}
+				}
+			}
+		}
+		//ROS_INFO("number of neighbours found %d",neighbours.size());		
+		/*for(int i = 0;i<neighbours.size();i++){
+			ROS_INFO("neighbours (%.2lf,%.2lf)",neighbours[i]->point.x,neighbours[i]->point.y);   
+		}*/
 	}
 	
 	path_planning::grid_cell find_grid_cell(geometry_msgs::Point new_point) {
@@ -331,7 +421,7 @@ public:
 
 
 	int convert_grid_cell (path_planning::grid_cell grid) {
-		int map_array_value=grid.y*map_width*map_resolution+grid.x;
+		int map_array_value=grid.y*map_width+grid.x;
 		return(map_array_value);
 	}
 
@@ -537,8 +627,14 @@ public:
 	}
 	
 	void add_to_spatial_index(node* temp_node){
+		//ROS_INFO("I've entered add_to_spatial_index");
 		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_node->point);
+		//ROS_INFO("point is (%.2lf,%.2lf)",temp_node->point.x,temp_node->point.y);
+		//ROS_INFO("(%d,%d)",grid.x,grid.y);
 		spatial_grid[grid.x][grid.y].push_back(temp_node);
+		/*for (int i =0; i < spatial_grid[grid.x][grid.y].size();i++){	
+			ROS_INFO("spacial_index point (%lf,%lf)",spatial_grid[grid.x][grid.y].at(i)->point.x,spatial_grid[grid.x][grid.y].at(i)->point.y);
+		}*/
 	}
 
 	//void find_adjacent
@@ -622,8 +718,9 @@ int main(int argc, char **argv)
 	static const int radius_neighbour = 1;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
-	int index_of_closest=0;
-	int index_of_lowest_cost_neighbour=0;
+	node* closest_node;
+	node* lowest_cost_neighbour;
+	node* new_node;
 	int map_array_value=0;
 	std::vector<geometry_msgs::Point> temp_path,path_to_goal;
 
@@ -657,8 +754,8 @@ int main(int argc, char **argv)
 
 	points.scale.x = 0.05;
 	points.scale.y = 0.05;
-	goal_marker.scale.x = 0.1;
-	goal_marker.scale.y = 0.1;
+	goal_marker.scale.x = 0.15;
+	goal_marker.scale.y = 0.15;
 	path_points.scale.x = 0.1;
 	path_points.scale.y = 0.1;
 
@@ -680,13 +777,14 @@ int main(int argc, char **argv)
 
  
 	while (!goal_recieved){
-		ROS_INFO("Please select goal point");
+		ROS_WARN_ONCE("Please select goal point");
 		ros::spinOnce();
 	}
 	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 
 	points.points.push_back(path_planning.get_start());
-	goal_marker.points.push_back(path_planning.get_goal());
+	goal_marker.points.push_back(goal);
+	marker_pub.publish(goal_marker);
 	
 
 	//timer setup
@@ -695,22 +793,21 @@ int main(int argc, char **argv)
     
 	while(ros::ok()){
 		ros::spinOnce();
-		ROS_INFO("I get to 1");
 		//find rand point
 		rand_point=path_planning.get_rand_point(unif_x,unif_y);
-		index_of_closest=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
-		next_point=path_planning.new_point(path_planning.get_all_nodes_value(index_of_closest),rand_point); // find point that could be added to tree
+		closest_node=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
+		next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
 		map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
 		//ROS_INFO("Array value is %d",array_grid);
-		ROS_INFO("I get to 2");
+
 		//if statement to implement obstacle avoidance, make function in RRT class to do this;
 		if (map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1) {
-			ROS_INFO("I get to 3");
-			index_of_lowest_cost_neighbour=path_planning.check_neighbours(next_point,index_of_closest); //find nearest suitable neighbour
 
-			if(index_of_lowest_cost_neighbour !=-1){	//only enter if suitable neighbour found							
-				path_planning.add_node_to_tree(index_of_lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
-				path_planning.rewire_neighbours(); // rewires neighbours of new point;
+			lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
+
+			if (lowest_cost_neighbour !=NULL){	//only enter if suitable neighbour found							
+				new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
+				path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
 
 				//marker updates
 				points.action = visualization_msgs::Marker::DELETEALL;
