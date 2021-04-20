@@ -1,0 +1,19 @@
+Chassis:
+
+Mass			17.316				kg
+Center of gravity	(0.009, 0.005, 0.387)		m		(assuming x forwards, y to the left and z up (origin is on ground plane!))
+
+Inertia tensor		Ixx = 1742396
+			Ixy = 13179	Iyy = 1899292
+			Ixz = -168772	Iyz = 7649	Izz = 781746
+
+
+
+Wheel:
+
+Mass			0.283				kg
+Center of gravity	(0,0,0)				m		(assuming z axis through wheel axle)
+
+Inertia tensor		Ixx = 992
+			Ixy = 0		Iyy = 992
+			Ixz = 0		Iyz = 0		Izz = 1953
