@@ -1,7 +1,8 @@
-// add grid based spacial indexing
+		// add grid based spacial indexing
 //replace with reolution that is given with map data.
 //fix hard coded grid width
 //fix rand point cause it ain't rand
+//make distance function
 
 
 
@@ -29,7 +30,8 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 10
+#define GRID_WIDTH 17
+#define GRID_HEIGHT 33
 
 //test for branch
 //lol
@@ -42,6 +44,7 @@ int map_width,map_height;//should change to local variable;
 std::default_random_engine re;
 geometry_msgs::Point goal;
 bool goal_recieved=false;
+bool debugging=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -77,10 +80,11 @@ public:
 	
 	
 private:
-	double distance,goal_radius,path_cost,neighbour_radius;
+	double distance,goal_radius,path_cost,neighbour_radius,node_dist;
 	double map_resolution; // get this from the map data coming from the server.
 	double grid_resolution;
 	int density;
+	double area_of_search_space;
 
     std::vector<geometry_msgs::Point> all_nodes;
 	std::vector<geometry_msgs::Point> path;
@@ -93,21 +97,22 @@ private:
 	std::vector<node*> neighbours;
 	std::vector<node*> node_list;
 	std::vector<node*> goal_list;
-	std::vector<node*> spatial_grid[10][10];
+	std::vector<node*> spatial_grid[GRID_WIDTH][GRID_HEIGHT];
 	
 	int I;
 	bool goal_found;
 
 
 public:
-	RRT(double d, double x_start, double y_start, double r,double g_r, double goal_r,int den, double neighbour_r) : distance (d), map_resolution(r),goal_radius(goal_r), density(den), neighbour_radius(neighbour_r),grid_resolution(g_r) {
+	RRT(double d, double x_start, double y_start, double r,double g_r, double goal_r,int den, double neighbour_r, double rs) : distance (d), map_resolution(r),goal_radius(goal_r), density(den), neighbour_radius(neighbour_r),grid_resolution(g_r),node_dist(rs) {
 		start.x=x_start;
 		start.y=y_start;		
 		srand((unsigned int)time(NULL));
 		I=0;
 		create_root();
 		goal_found=false;
-		path_cost=10000;	
+		path_cost=10000;
+		area_of_search_space=100;
 	}
 
 	void create_root() 
@@ -126,7 +131,9 @@ public:
 
 	node* add_node_to_tree(node* parent, geometry_msgs::Point new_point) 
 	{
-		//ROS_INFO("I've entered add_node_to_tree");
+		if (debugging){
+			ROS_INFO("I've entered add_node_to_tree");
+		}
 		node* new_node = new node;			
 		new_node->ID = I++;
 		new_node->point.x=new_point.x;
@@ -142,15 +149,11 @@ public:
 
 	double calculate_cost (node* parent_node, node* child_node) //
 	{
-		double x_diff;
-		double y_diff;
 		double cost;
-    	x_diff=parent_node->point.x-child_node->point.x;
-    	y_diff=parent_node->point.y-child_node->point.y;
     	if(parent_node->parent != NULL){
-			cost=calculate_cost(parent_node->parent,parent_node)+sqrt(pow(y_diff,2)+pow(x_diff,2));
+			cost=calculate_cost(parent_node->parent,parent_node)+get_dist(parent_node->point,child_node->point);
 		} else {
-			cost=sqrt(pow(y_diff,2)+pow(x_diff,2));
+			cost=get_dist(parent_node->point,child_node->point);
 		}
 		return(cost);
 	}
@@ -215,6 +218,7 @@ public:
 		return(goal_node);
 	}
 
+	
 	geometry_msgs::Point get_all_nodes_value(int i) {
 		return(all_nodes[i]);
 	}
@@ -241,7 +245,9 @@ public:
 	}
 	
  	geometry_msgs::Point new_point(node* closest, geometry_msgs::Point random_point){
-		//ROS_INFO("I've entered new_point");
+		if (debugging){
+			ROS_INFO("I've entered new_point");
+		}
 		double angle,x,y;
 		x=random_point.x-closest->point.x;
 		y=random_point.y-closest->point.y;
@@ -254,12 +260,15 @@ public:
 	}
 
 	node* check_neighbours (geometry_msgs::Point new_point){
-		//ROS_INFO("I've entered check neighbours");
+		if (debugging){
+			ROS_INFO("I've entered check neighbours");
+		}
 		neighbours.clear();
 		double cost_from_neighbour,total_cost;
 		double lowest_cost=1000000;
 		double x_diff,y_diff;
 		find_neighbours(new_point);
+		update_neighbour_radius();
 		node* closest_neighbour=NULL;
 		/*for(int i = 0;i<all_nodes.size();i++){
 			x_diff=new_point.x-all_nodes[i].x;
@@ -288,7 +297,7 @@ public:
 			y_diff=new_point.y-neighbours[i]->point.y;
 			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
 				cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
-				if(cost_from_neighbour <= neighbour_radius && !check_line_obstacle(new_point,neighbours[i]->point)){
+				if(cost_from_neighbour <= 1 && !check_line_obstacle(new_point,neighbours[i]->point)){
 					total_cost=get_cost(neighbours[i])+cost_from_neighbour;
 					if (total_cost < lowest_cost){
 						closest_neighbour=neighbours[i];
@@ -302,7 +311,9 @@ public:
 	}
 	
 	void rewire_neighbours (node* test_node) {
-		//ROS_INFO("I've entered rewire neighbours");
+		if (debugging){
+			ROS_INFO("I've entered rewire neighbours");
+		}
 		double total_cost;
 		for (int i = 0;i<neighbours.size();i++){
 			total_cost=calculate_cost(test_node,neighbours[i]);
@@ -317,7 +328,9 @@ public:
 	} 
 
 	node* find_closest(geometry_msgs::Point random_point){
-		//ROS_INFO("I've entered find_closest");
+		if (debugging){
+			ROS_INFO("I've entered find_closest");
+		}
 		int near=0;
 		double temp=0;
 		double mag=1000000;
@@ -352,7 +365,9 @@ public:
 	}
 
 	void find_neighbours(geometry_msgs::Point temp_point){ //add exception handling about if no point found
-		//ROS_INFO("I've entered find_neighbours");
+		if (debugging){
+			ROS_INFO("I've entered find_neighbours");
+		}
 		int lower_x_grid,upper_x_grid,lower_y_grid,upper_y_grid;
 		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_point);
 		//ROS_INFO("test point is (%lf,%lf)",temp_point.x,temp_point.y);
@@ -380,8 +395,8 @@ public:
 			} else {
 				lower_y_grid=grid.y-search_width;
 			}
-			if((grid.y+search_width)>(GRID_WIDTH-1)){
-				upper_y_grid=GRID_WIDTH-1;
+			if((grid.y+search_width)>(GRID_HEIGHT-1)){
+				upper_y_grid=GRID_HEIGHT-1;
 			} else {
 				upper_y_grid=grid.y+search_width;
 			}
@@ -426,10 +441,6 @@ public:
 		return(map_array_value);
 	}
 
-	int convert_grid_cell_for_spatial_indexing (path_planning::grid_cell grid) {
-		int grid_array_value=grid.y*10+grid.x;
-		return(grid_array_value);
-	}
 
 	int round_to_grid_cell (double coord){
 		return(int(coord/map_resolution));
@@ -459,12 +470,12 @@ public:
 
 	std::vector<geometry_msgs::Point> find_path() {
 		for (int i=0;i<goal_list.size();i++){
-			if (get_cost(goal_node) > get_cost(goal_list[i])){
+			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
 			}
 		}
-		if (path_cost > goal_node->cost){
-			path_cost=goal_node->cost;
+		if (path_cost > (goal_node->cost + get_dist(goal_node->point,goal))){
+			path_cost=goal_node->cost + get_dist(goal_node->point,goal);
 			geometry_msgs::Point temp_point;
 			path.clear();
 			path.push_back(goal);
@@ -628,7 +639,9 @@ public:
 	}
 	
 	void add_to_spatial_index(node* temp_node){
-		//ROS_INFO("I've entered add_to_spatial_index");
+		if (debugging){
+			ROS_INFO("I've entered add_to_spatial_index");
+		}
 		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_node->point);
 		//ROS_INFO("point is (%.2lf,%.2lf)",temp_node->point.x,temp_node->point.y);
 		//ROS_INFO("(%d,%d)",grid.x,grid.y);
@@ -636,6 +649,44 @@ public:
 		/*for (int i =0; i < spatial_grid[grid.x][grid.y].size();i++){	
 			ROS_INFO("spacial_index point (%lf,%lf)",spatial_grid[grid.x][grid.y].at(i)->point.x,spatial_grid[grid.x][grid.y].at(i)->point.y);
 		}*/
+	}
+
+	void update_neighbour_radius(){
+
+		neighbour_radius=sqrt((area_of_search_space*double (density))/(PI*double(node_list.size())));
+		if (neighbour_radius<node_dist){
+			neighbour_radius=node_dist;
+		}
+	}
+
+	bool check_node_density(){
+		//ROS_INFO("neighbour_size = %d",neighbours.size());
+		//ROS_INFO("Density = %d",density);
+		//ROS_INFO("neighbour_radius = %lf",neighbour_radius);
+		if (neighbours.size() > density){
+			return (false);
+		} else {
+			return(true);
+		}
+	}
+
+	bool node_dist_check(geometry_msgs::Point test_point, node* closest) {
+		double dist=get_dist(closest->point,test_point);
+		//ROS_INFO("dist = %lf",dist);
+		if (dist > node_dist){
+			return(true);
+		} else {
+			return(false);
+		}
+	}
+
+	double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2){
+		double x_diff;
+		double y_diff;
+		double dist;
+    	x_diff=point_1.x-point_2.x;
+    	y_diff=point_1.y-point_2.y;
+		return(sqrt(pow(y_diff,2)+pow(x_diff,2)));
 	}
 
 };
@@ -663,7 +714,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=100000;
+	static const int rate=1000000;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
@@ -671,12 +722,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle g;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
-	//ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
-	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
+	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 
 	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
 	ros::Rate r(rate);
-	ros::Duration half_sec(0.5);
 
 	path_planning::path_to_goal path_to_publish;
 
@@ -687,10 +737,10 @@ int main(int argc, char **argv)
 	}
 
 	// change to be flexible with map size
-	const double upper_x= 10;// 32;  
-	const double lower_x=0; //7; 
-	const double upper_y=10; //64; 
-	const double lower_y=0; //7;   
+	const double upper_x=32;   //10;// 32;  
+	const double lower_x=7;  //0; //7; 
+	const double upper_y=64;  //10; //64; 
+	const double lower_y=7;  //0; //7;   
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
@@ -708,15 +758,16 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.5;
-	static const int density_of_nodes=5;
-	static const double x_start= 5; //19.8; //change to amcl postion;
-	static const double y_start= 5;  //52.4; 
-	static const double map_resolution=1;
-	static const double grid_resolution=1;
+	static const double child_distance=0.75;
+	static const int density_of_nodes=200;
+	static const double x_start=19.8; //5; //19.8; //change to amcl postion;
+	static const double y_start=52.4; //5;  //52.4; 
+	static const double map_resolution=0.05;
+	static const double grid_resolution=2;
 	static const double radius_goal=0.5;
-	static const int radius_neighbour = 1;
-	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour);  //would intialize path planner to have root at robot base
+	static const int radius_neighbour = 1.0;
+	static const double dist_node = 2.0;
+	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
 	node* lowest_cost_neighbour;
@@ -730,7 +781,7 @@ int main(int argc, char **argv)
   
   //marker setyp		
 	visualization_msgs::Marker points, line_list, goal_marker, path_points, path;
-	points.header.frame_id=line_list.header.frame_id= goal_marker.header.frame_id = path_points.header.frame_id = path.header.frame_id = "my_frame";
+	points.header.frame_id=line_list.header.frame_id= goal_marker.header.frame_id = path_points.header.frame_id = path.header.frame_id = "map";
 	points.header.stamp= line_list.header.stamp = goal_marker.header.stamp = path_points.header.stamp = path.header.stamp = ros::Time::now();
 	points.ns="nodes";
 	goal_marker.ns="goal_node";
@@ -801,11 +852,10 @@ int main(int argc, char **argv)
 		//ROS_INFO("Array value is %d",array_grid);
 
 		//if statement to implement obstacle avoidance, make function in RRT class to do this;
-		if (map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1) {
+		if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1)) {
 
 			lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
-
-			if (lowest_cost_neighbour !=NULL){	//only enter if suitable neighbour found							
+			if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
 				new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
 				path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
 
