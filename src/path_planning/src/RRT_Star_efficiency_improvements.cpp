@@ -255,6 +255,7 @@ public:
 
 	node* check_neighbours (geometry_msgs::Point new_point){
 		//ROS_INFO("I've entered check neighbours");
+		neighbours.clear();
 		double cost_from_neighbour,total_cost;
 		double lowest_cost=1000000;
 		double x_diff,y_diff;

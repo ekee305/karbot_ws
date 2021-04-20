@@ -16,7 +16,7 @@
   <include file="$(find karbot_navigation)/launch/amcl.launch"/>	
   
   <!-- path_planning -->
-  <node pkg="path_planning" name="path_planning" type="RRT_Star_efficiency_improvements" />	
+  <node pkg="path_planning" name="path_planning" type="RRT_Star_with_rewiring" />	
 
   <!-- Run the global costmap node -->
   <node name="global_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
