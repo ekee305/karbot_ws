@@ -259,9 +259,9 @@ public:
 		double cost_from_neighbour,total_cost;
 		double lowest_cost=1000000;
 		double x_diff,y_diff;
-		//find_neighbours(new_point);
+		find_neighbours(new_point);
 		node* closest_neighbour=NULL;
-		for(int i = 0;i<all_nodes.size();i++){
+		/*for(int i = 0;i<all_nodes.size();i++){
 			x_diff=new_point.x-all_nodes[i].x;
 			y_diff=new_point.y-all_nodes[i].y;
 			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
@@ -282,8 +282,8 @@ public:
 				lowest_cost=total_cost;
 	
 			}
-		}
-		/*for (int i = 0;i<neighbours.size();i++){
+		}*/
+		for (int i = 0;i<neighbours.size();i++){
 			x_diff=new_point.x-neighbours[i]->point.x;
 			y_diff=new_point.y-neighbours[i]->point.y;
 			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
@@ -296,7 +296,7 @@ public:
 					}
 				}
 			}	 
-		}*/
+		}
 
 		return(closest_neighbour);
 	}
@@ -306,7 +306,7 @@ public:
 		double total_cost;
 		for (int i = 0;i<neighbours.size();i++){
 			total_cost=calculate_cost(test_node,neighbours[i]);
-			if (total_cost < get_cost(neighbours[i])){
+			if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 				remove_child_from_parent(neighbours[i]);
 				neighbours[i]->parent=test_node;
 				neighbours[i]->cost=total_cost;	
