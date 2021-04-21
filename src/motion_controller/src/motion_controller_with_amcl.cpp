@@ -90,6 +90,9 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
+        if (heading_error > PI/8){
+            velocity=0;
+        }
         /*if (steer_velocity < 0.5){
             steer_velocity=0.5;
         }*/
