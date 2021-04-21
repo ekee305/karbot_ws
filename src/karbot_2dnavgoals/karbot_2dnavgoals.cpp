@@ -8,7 +8,7 @@ double waitingRoom_y = 13.1
 
 int main(int argc, char **argv) {
 
-ros::init(argc, argv, "2d_nav_goal");
+ros::init(argc, argv, "karbot_2dnavgoals");
 
 ros::NodeHandle n;
 

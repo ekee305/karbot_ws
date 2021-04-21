@@ -1,7 +1,0 @@
-<launch>
-
- <node pkg="karbot_2dnavgoals" name="karbot_2davgoals" type="karbot_2dnavgoals.cpp" />
-
-</launch>	
-
-
