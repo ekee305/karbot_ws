@@ -3,7 +3,7 @@
 //fix hard coded grid width
 //fix rand point cause it ain't rand
 //make distance function
-//remeber to change grid width stuff as well
+//remeber to change grid width stuff as well and area of grid
 
 
 
@@ -25,6 +25,8 @@
 #include "geometry_msgs/PoseStamped.h"
 #include <gazebo_msgs/GetModelState.h>
 #include <time.h>
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include <tf/tf.h>
 
 
 
@@ -41,11 +43,15 @@
 std::vector<int> map;
 double resolution_from_map;
 bool map_loaded_flag=1;
-int map_width,map_height;//should change to local variable;
+int map_width,map_height;
+geometry_msgs::Point position;
+double roll,pitch, yaw;
+
 std::default_random_engine re;
 geometry_msgs::Point goal;
 bool goal_recieved=false;
 bool debugging=false;
+bool first_pose_loaded=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -64,6 +70,17 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
 	goal.x=msg.pose.position.x;
     goal.y=msg.pose.position.y;
 	goal_recieved=true;
+}
+
+void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
+{
+	position.x=msg->pose.pose.position.x;
+    position.y=msg->pose.pose.position.y;
+    tf::Quaternion q( msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    m.getRPY(roll, pitch, yaw);
+    first_pose_loaded=true;
+
 }
 
 
@@ -159,17 +176,6 @@ public:
 		return(cost);
 	}
 
-	/*double get_cost(int index)
-	{
-		double cost;
-		if(node_list[index]->parent!=NULL){		
-			cost=calculate_cost(node_list[index]->parent,node_list[index]);
-			node_list[index]->cost=cost;
-		} else{
-			cost=0;
-		}
-		return(cost);
-	}*/
 
 	double get_cost(node *temp_node)
 	{
@@ -271,28 +277,6 @@ public:
 		find_neighbours(new_point);
 		update_neighbour_radius();
 		node* closest_neighbour=NULL;
-		/*for(int i = 0;i<all_nodes.size();i++){
-			x_diff=new_point.x-all_nodes[i].x;
-			y_diff=new_point.y-all_nodes[i].y;
-			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
-				cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
-				if(cost_from_neighbour <= neighbour_radius && !check_line_obstacle(new_point,all_nodes[i])){
-					neighbours.push_back(node_list[i]);
-				}
-			}	    
-		}
-		//find lowest cost path through neighbours
-		for (int i = 0;i<neighbours.size();i++){
-			x_diff=new_point.x-neighbours[i]->point.x;
-			y_diff=new_point.y-neighbours[i]->point.y;
-			cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
-			total_cost=get_cost(neighbours[i])+cost_from_neighbour;
-			if (total_cost < lowest_cost){
-				closest_neighbour=neighbours[i];
-				lowest_cost=total_cost;
-	
-			}
-		}*/
 		for (int i = 0;i<neighbours.size();i++){
 			x_diff=new_point.x-neighbours[i]->point.x;
 			y_diff=new_point.y-neighbours[i]->point.y;
@@ -339,15 +323,7 @@ public:
 		node* nearest_node;
 		//ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
 		find_neighbours(random_point);
-		/*for(int i = 0;i<node_list.size();i++){
-			x_diff=random_point.x-node_list[i]->point.x;
-			y_diff=random_point.y-node_list[i]->point.y;
-			temp=sqrt(pow(y_diff,2)+pow(x_diff,2));
-			if(temp<mag){
-				mag=temp;
-				nearest_node=node_list[i];
-			}    
-		}*/
+
 
 		for(int i = 0;i<neighbours.size();i++){
 			//ROS_INFO("checked neighbours (%.2lf,%.2lf)",neighbours[i]->point.x,neighbours[i]->point.y);
@@ -715,27 +691,41 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=1000000;
+	static const int rate=100000;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
 	ros::NodeHandle p;
 	ros::NodeHandle g;
+	ros::NodeHandle a;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
-
+	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
 	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
 	ros::Rate r(rate);
 
 	path_planning::path_to_goal path_to_publish;
 
-	//map setup
+	//waiting ons ubscribers
 	while (map_loaded_flag){
+		ROS_WARN_ONCE("Waiting for map");
 		ros::spinOnce();
 		sleep(1);
 	}
+	ROS_WARN_ONCE("Map recieved");
+    while(!first_pose_loaded){
+        ROS_WARN_ONCE("Waiting for AMCL pose");
+		ros::spinOnce();
+    }
+	ROS_WARN_ONCE("Pose recieved");
+
+	while (!goal_recieved){
+		ROS_WARN_ONCE("Please select goal point");
+		ros::spinOnce();
+	}
+	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 
 	// change to be flexible with map size
 	const double upper_x=30;  
@@ -746,23 +736,13 @@ int main(int argc, char **argv)
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
 
-	//set up service to get robot x y points
-	/*while (!service_ready) {
-      service_ready = ros::service::exists("/gazebo/get_model_state",true);
-      ROS_INFO("waiting for get_model_state service");
-      half_sec.sleep();
-    }
-
-	ros::ServiceClient get_model_state_client = n.serviceClient<gazebo_msgs::GetModelState>("/gazebo/get_model_state");
-	mybot_state.request.model_name = "m2wr";
-    mybot_state.request.relative_entity_name = "world";*/
 
   
   //initialize RRT object and variables
 	static const double child_distance=0.5;
 	static const int density_of_nodes=20;
-	static const double x_start=25; //change to amcl postion;
-	static const double y_start=25;  
+	static const double x_start=position.x; //change to amcl postion;
+	static const double y_start=position.y;  
 	static const double map_resolution=0.05;
 	static const double grid_resolution=1;
 	static const double radius_goal=0.5;
@@ -828,11 +808,7 @@ int main(int argc, char **argv)
 
 
  
-	while (!goal_recieved){
-		ROS_WARN_ONCE("Please select goal point");
-		ros::spinOnce();
-	}
-	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
+
 
 	points.points.push_back(path_planning.get_start());
 	goal_marker.points.push_back(goal);
