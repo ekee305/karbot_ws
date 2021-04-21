@@ -702,6 +702,7 @@ public:
 		node_list[0]=new_root;
 		node_list[node_list_index]=root;
 		root=new_root;
+		rewire_neighbours(root);
 	}
 
 	node* get_path_node(){
