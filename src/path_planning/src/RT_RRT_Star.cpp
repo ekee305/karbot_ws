@@ -1,9 +1,9 @@
-//test
 		// add grid based spacial indexing
 //replace with reolution that is given with map data.
 //fix hard coded grid width
 //fix rand point cause it ain't rand
 //make distance function
+//remeber to change grid width stuff as well
 
 
 
@@ -25,15 +25,14 @@
 #include "geometry_msgs/PoseStamped.h"
 #include <gazebo_msgs/GetModelState.h>
 #include <time.h>
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 
 
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 17
-#define GRID_HEIGHT 33
+#define GRID_WIDTH 10
+#define GRID_HEIGHT 10
 
 //test for branch
 //lol
@@ -41,15 +40,12 @@
 //Global variables
 std::vector<int> map;
 double resolution_from_map;
-geometry_msgs::Point position;
-double roll,pitch, yaw;
 bool map_loaded_flag=1;
 int map_width,map_height;//should change to local variable;
 std::default_random_engine re;
 geometry_msgs::Point goal;
 bool goal_recieved=false;
 bool debugging=false;
-bool first_pose_loaded=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -68,17 +64,6 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
 	goal.x=msg.pose.position.x;
     goal.y=msg.pose.position.y;
 	goal_recieved=true;
-}
-
-void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
-{
-	position.x=msg->pose.pose.position.x;
-    position.y=msg->pose.pose.position.y;
-    tf::Quaternion q( msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
-    tf::Matrix3x3 m(q);
-    m.getRPY(roll, pitch, yaw);
-    first_pose_loaded=true;
-
 }
 
 
@@ -113,7 +98,7 @@ private:
 	std::vector<node*> neighbours;
 	std::vector<node*> node_list;
 	std::vector<node*> goal_list;
-	std::vector<node*> spatial_grid[GRID_WIDTH][GRID_HEIGHT];
+	std::vector<node*> spatial_grid[31][31];
 	
 	int I;
 	bool goal_found;
@@ -174,6 +159,17 @@ public:
 		return(cost);
 	}
 
+	/*double get_cost(int index)
+	{
+		double cost;
+		if(node_list[index]->parent!=NULL){		
+			cost=calculate_cost(node_list[index]->parent,node_list[index]);
+			node_list[index]->cost=cost;
+		} else{
+			cost=0;
+		}
+		return(cost);
+	}*/
 
 	double get_cost(node *temp_node)
 	{
@@ -385,23 +381,23 @@ public:
 		int search_width=0;
 		while(neighbours.empty()){
 			search_width++;
-			if((grid.x-search_width)<0){
+			if((grid.x-search_width)<20){
 				lower_x_grid=0;
 			} else {
 				lower_x_grid=grid.x-search_width;
 			}
-			if((grid.x+search_width)>(GRID_WIDTH-1)){
-				upper_x_grid=GRID_WIDTH-1;
+			if((grid.x+search_width)>(29)){
+				upper_x_grid=29;
 			} else{
 				upper_x_grid=grid.x+search_width;
 			}
-			if((grid.y-search_width)<0){
+			if((grid.y-search_width)<20){
 				lower_y_grid=0;
 			} else {
 				lower_y_grid=grid.y-search_width;
 			}
-			if((grid.y+search_width)>(GRID_HEIGHT-1)){
-				upper_y_grid=GRID_HEIGHT-1;
+			if((grid.y+search_width)>(29)){
+				upper_y_grid=29;
 			} else {
 				upper_y_grid=grid.y+search_width;
 			}
@@ -702,10 +698,10 @@ public:
 
 	}
 
-	double dist_to_goal(){
+	double dist_to_goal(double x_robot,double y_robot, double x_g, double y_g){
 			double x_diff,y_diff;
-			x_diff=goal.x-position.x;
-			y_diff=goal.y-position.y;
+			x_diff=x_g-x_robot;
+			y_diff=y_g-y_robot;
 			return(sqrt(pow(y_diff,2)+pow(x_diff,2)));
 	}
 
@@ -725,12 +721,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle p;
 	ros::NodeHandle g;
-    ros::NodeHandle a;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
-    //ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
-    ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
+	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+
 	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
 	ros::Rate r(rate);
 
@@ -738,70 +733,43 @@ int main(int argc, char **argv)
 
 	//map setup
 	while (map_loaded_flag){
-		ROS_WARN_ONCE("Waiting for map");
-        ros::spinOnce();
-		sleep(1);
-	} 	
-    
-    while (!goal_recieved){
-		ROS_WARN_ONCE("Please select goal point");
 		ros::spinOnce();
+		sleep(1);
 	}
-	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 
-    while(!first_pose_loaded){
-        ROS_WARN_ONCE("waiting for amcl pose");
-        ros::spinOnce();
-    }
-    ROS_INFO("amcl pose recieved");
-
-	// Hospital_floorplan params
-	/*const double upper_x=32;   //10;// 32;  
-	const double lower_x=7;  //0; //7; 
-	const double upper_y=64;  //10; //64; 
-	const double lower_y=7;  //0; //7;   */
-	
-    //test_map params
-    
-    const double upper_x=10;  
-	const double lower_x=0;  
-	const double upper_y=10; 
-	const double lower_y=0; 
-    
-    
-    
-    std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
+	// change to be flexible with map size
+	const double upper_x=30;  
+	const double lower_x=20; 
+	const double upper_y=30;
+	const double lower_y=20;   
+	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
 
+	//set up service to get robot x y points
+	/*while (!service_ready) {
+      service_ready = ros::service::exists("/gazebo/get_model_state",true);
+      ROS_INFO("waiting for get_model_state service");
+      half_sec.sleep();
+    }
+
+	ros::ServiceClient get_model_state_client = n.serviceClient<gazebo_msgs::GetModelState>("/gazebo/get_model_state");
+	mybot_state.request.model_name = "m2wr";
+    mybot_state.request.relative_entity_name = "world";*/
+
   
   //initialize RRT object and variables
-	static const double child_distance=0.75;
-	static const int density_of_nodes=200;
-	static const double x_start=position.x;
-	static const double y_start=position.y;  
+	static const double child_distance=0.5;
+	static const int density_of_nodes=20;
+	static const double x_start=25; //change to amcl postion;
+	static const double y_start=25;  
 	static const double map_resolution=0.05;
-	static const double grid_resolution=2;
+	static const double grid_resolution=1;
 	static const double radius_goal=0.5;
 	static const int radius_neighbour = 1.0;
-	static const double dist_node = 2.0;
-	
-    /*static const double child_distance=0.5;
-	static const int density_of_nodes=20;
-	static const double x_start=position.x;  
-	static const double y_start=position.y;   
-	static const double map_resolution=1.0;
-	static const double grid_resolution=2;
-	static const double radius_goal=0.25;
-	static const int radius_neighbour = 1.0;
-	static const double dist_node = 1.0;*/
-    
-    
-    
-    
-    RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
-	//RRT variables for main()
-    geometry_msgs::Point next_point,parent,rand_point;
+	static const double dist_node = 0.5;
+	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
+	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
 	node* lowest_cost_neighbour;
 	node* new_node;
@@ -859,6 +827,13 @@ int main(int argc, char **argv)
 	line_list.color.a = 1.0;
 
 
+ 
+	while (!goal_recieved){
+		ROS_WARN_ONCE("Please select goal point");
+		ros::spinOnce();
+	}
+	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
+
 	points.points.push_back(path_planning.get_start());
 	goal_marker.points.push_back(goal);
 	marker_pub.publish(goal_marker);
@@ -870,8 +845,64 @@ int main(int argc, char **argv)
     
 	while(ros::ok()){
 		ros::spinOnce();
-		
-		
+		//find rand point
+		rand_point=path_planning.get_rand_point(unif_x,unif_y);
+		closest_node=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
+		next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
+		map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
+		//ROS_INFO("Array value is %d",array_grid);
+
+		//if statement to implement obstacle avoidance, make function in RRT class to do this;
+		if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1)) {
+
+			lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
+			if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
+				new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
+				path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
+
+				//marker updates
+				points.action = visualization_msgs::Marker::DELETEALL;
+				line_list.points.clear();
+				points.points.clear();
+				points.action = visualization_msgs::Marker::ADD;
+				points.points.push_back(path_planning.get_node_list_element(0)->point);					
+				for(int i=1;i<path_planning.get_node_list().size()-1;i++){
+					points.points.push_back(path_planning.get_node_list_element(i)->point);
+					line_list.points.push_back(path_planning.get_node_list_element(i)->point);
+					line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+				}
+				marker_pub.publish(points);
+				marker_pub.publish(line_list);
+				marker_pub.publish(goal_marker);
+			}
+		}
+
+		path_planning.is_goal_found();
+
+		//path to goal found state
+		if (path_planning.get_goal_found()){
+			temp_path.clear();
+			temp_path=path_planning.find_path();
+			if(temp_path != path_to_goal){
+				path_to_goal=temp_path;
+				path.points.clear();
+				ROS_INFO("found and printed path");
+				path.action = visualization_msgs::Marker::ADD;
+				for (int i = path_planning.path_length()-2; i >=0 ;i--){
+						path.points.push_back(path_planning.get_path_point(i));
+						path.points.push_back(path_planning.get_path_point(i+1));	
+						marker_pub.publish(path);
+				}			
+				ROS_INFO("path cost = %lf ",path_planning.get_goal_node()->cost);//add function to get goal point;
+			}		
+		}
+		//moving to goal state
+		if ((time(&timer) - begin) > 15 && path_planning.get_goal_found()){
+			path_to_publish.path=path_to_goal;
+			path_pub.publish(path_to_publish);
+			return(1);
+
+		}
 		r.sleep();
 	}   
 }
