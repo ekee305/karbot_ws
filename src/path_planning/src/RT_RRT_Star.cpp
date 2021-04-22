@@ -4,6 +4,7 @@
 //fix rand point cause it ain't rand
 //make distance function
 //remeber to change grid width stuff as well and area of grid
+// deal with goal outside map
 
 
 
@@ -238,11 +239,6 @@ public:
 	node* get_node_list_element(int index){
 		return(node_list[index]);
 	}
-
-	void set_goal (double x,double y) {
-		goal.x=x;
-		goal.y=y;
-	}
 	
 	geometry_msgs::Point get_rand_point(std::uniform_real_distribution<double> unif_x, std::uniform_real_distribution<double> unif_y){	
 		geometry_msgs::Point point;
@@ -435,6 +431,7 @@ public:
 			ROS_INFO("I've entered is goal found");
 		}	
 		if (get_dist(root->point,goal) > goal_radius){
+			clear_goal_variables();
 			double x_diff,y_diff,cost_to_goal;
 			find_neighbours(goal);
 			for (int i = 0;i<neighbours.size();i++){
@@ -736,6 +733,12 @@ public:
 		return(path_nodes);
 	}
 
+	void clear_goal_variables(){
+		goal_node=NULL;
+		goal_list.clear();
+		goal_found=false;
+	}
+
 };
 
 class robot_pose{
@@ -925,6 +928,7 @@ int main(int argc, char **argv)
 						points.action = visualization_msgs::Marker::DELETEALL;
 						line_list.points.clear();
 						points.points.clear();
+						goal_marker.points.clear();
 						points.action = visualization_msgs::Marker::ADD;
 						points.points.push_back(path_planning.get_node_list_element(0)->point);					
 						for(int i=1;i<path_planning.get_node_list().size()-1;i++){
@@ -932,9 +936,11 @@ int main(int argc, char **argv)
 							line_list.points.push_back(path_planning.get_node_list_element(i)->point);
 							line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
 						}
+						goal_marker.points.push_back(goal);
 						marker_pub.publish(points);
 						marker_pub.publish(line_list);
 						marker_pub.publish(goal_marker);
+
 						if (debugging){
 							ROS_INFO("I've exited markers");
 						}			
@@ -945,9 +951,11 @@ int main(int argc, char **argv)
 			}
 			path_planning.is_goal_found();
 			if (path_planning.get_goal_found()){
+				ROS_INFO("i've got here 1");
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() !=1){
+					ROS_INFO("I've got here 2");
 					path_to_goal=temp_path;
 					path.points.clear();
 					path_planning.print_path();
@@ -977,15 +985,14 @@ int main(int argc, char **argv)
 					ROS_INFO(" ");
 					ROS_INFO(" ");
 					begin = time(&timer);
-					path_planning.print_path();
 				}
 			} else {
-				ROS_INFO("finding goal or at goal");
+				ROS_WARN_ONCE("finding goal or at goal");
 				path.points.clear();
 				marker_pub.publish(path);
 				
 			}
-
+		ros::spinOnce();
 		r.sleep();
 	}   
 }
