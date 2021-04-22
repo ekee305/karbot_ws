@@ -434,20 +434,24 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered is goal found");
 		}	
-		double x_diff,y_diff,cost_to_goal;
-		find_neighbours(goal);
-		for (int i = 0;i<neighbours.size();i++){
-			x_diff=goal.x-neighbours[i]->point.x;
-			y_diff=goal.y-neighbours[i]->point.y;
-			if (abs(x_diff) <= goal_radius && abs(y_diff) <= goal_radius){
-				cost_to_goal=sqrt(pow(y_diff,2)+pow(x_diff,2));
-				if(cost_to_goal <= goal_radius && !check_line_obstacle(goal,neighbours[i]->point)){
-					goal_found=true;
-					goal_node=neighbours[i];
-					goal_list.push_back(neighbours[i]);
+		if (get_dist(root->point,goal) > goal_radius){
+			double x_diff,y_diff,cost_to_goal;
+			find_neighbours(goal);
+			for (int i = 0;i<neighbours.size();i++){
+				x_diff=goal.x-neighbours[i]->point.x;
+				y_diff=goal.y-neighbours[i]->point.y;
+				if (abs(x_diff) <= goal_radius && abs(y_diff) <= goal_radius){
+					cost_to_goal=sqrt(pow(y_diff,2)+pow(x_diff,2));
+					if(cost_to_goal <= goal_radius && !check_line_obstacle(goal,neighbours[i]->point)){
+						goal_found=true;
+						goal_node=neighbours[i];
+						goal_list.push_back(neighbours[i]);
 
-				}
-			}	 
+					}
+				}	 
+			}
+		} else {
+			goal_found=false;
 		}
 		if (debugging){
 			ROS_INFO("I've exited is goal found");
@@ -706,6 +710,14 @@ public:
 		rewire_neighbours(root);
 	}
 
+	void print_next_path_point(){
+		if 	(path.size()==1){
+			ROS_INFO("travelling to point (%lf,%lf)",path[0].x,path[0].y);
+		} else {
+			ROS_INFO("travelling to point (%lf,%lf)",path[path.size()-2].x,path[path.size()-2].y);
+		}
+	}
+
 	node* get_next_path_node(){
 		node* temp_node;
 		if 	(path_nodes.size()==1){
@@ -718,6 +730,10 @@ public:
 
 	node* get_root_node(){
 		return(root);
+	}
+
+	std::vector<node*> get_path_nodes(){
+		return(path_nodes);
 	}
 
 };
@@ -803,8 +819,8 @@ int main(int argc, char **argv)
 	static const double map_resolution=0.05;
 	static const double grid_resolution=1;
 	static const double radius_goal=0.4;
-	static const int radius_neighbour = 1.0;
-	static const double dist_node = 0.5;
+	static const int radius_neighbour = 0.5;
+	static const double dist_node = 0.25;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
@@ -884,90 +900,91 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 		ros::spinOnce();
 		//find rand point
-		start_time = std::chrono::system_clock::now();
-		end_time = std::chrono::system_clock::now();
-		Elapsed = end_time - start_time;
-		while (Elapsed.count() < 10.0){
-			rand_point=path_planning.get_rand_point(unif_x,unif_y);
-			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
-			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
-			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
-			//ROS_INFO("Array value is %d",array_grid);
-
-			//if statement to implement obstacle avoidance, make function in RRT class to do this;
-			if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1)) {
-
-				lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
-				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
-					new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
-					path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
-
-					//marker updates
-					if (debugging){
-						ROS_INFO("I've entered markers");
-					}			
-					points.action = visualization_msgs::Marker::DELETEALL;
-					line_list.points.clear();
-					points.points.clear();
-					points.action = visualization_msgs::Marker::ADD;
-					points.points.push_back(path_planning.get_node_list_element(0)->point);					
-					for(int i=1;i<path_planning.get_node_list().size()-1;i++){
-						points.points.push_back(path_planning.get_node_list_element(i)->point);
-						line_list.points.push_back(path_planning.get_node_list_element(i)->point);
-						line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
-					}
-					marker_pub.publish(points);
-					marker_pub.publish(line_list);
-					marker_pub.publish(goal_marker);
-					if (debugging){
-						ROS_INFO("I've exited markers");
-					}			
-				}
-			}
+			start_time = std::chrono::system_clock::now();
 			end_time = std::chrono::system_clock::now();
 			Elapsed = end_time - start_time;
-		}
-		path_planning.is_goal_found();
-		if (path_planning.get_goal_found()){
-			temp_path.clear();
-			temp_path=path_planning.find_path();
-			if(temp_path != path_to_goal && temp_path.size() !=1){
-				path_to_goal=temp_path;
-				path.points.clear();
-				path_planning.print_path();
-				ROS_INFO("found and printed path");
-				path.action = visualization_msgs::Marker::ADD;
-				for (int i = path_planning.path_length()-2; i >=0 ;i--){
-						path.points.push_back(path_planning.get_path_point(i));
-						path.points.push_back(path_planning.get_path_point(i+1));	
-						marker_pub.publish(path);
+			while (Elapsed.count() < 10.0){
+				rand_point=path_planning.get_rand_point(unif_x,unif_y);
+				closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
+				next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
+				map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
+				//ROS_INFO("Array value is %d",array_grid);
+
+				//if statement to implement obstacle avoidance, make function in RRT class to do this;
+				if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1)) {
+
+					lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
+					if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
+						new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
+						path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
+
+						//marker updates
+						if (debugging){
+							ROS_INFO("I've entered markers");
+						}			
+						points.action = visualization_msgs::Marker::DELETEALL;
+						line_list.points.clear();
+						points.points.clear();
+						points.action = visualization_msgs::Marker::ADD;
+						points.points.push_back(path_planning.get_node_list_element(0)->point);					
+						for(int i=1;i<path_planning.get_node_list().size()-1;i++){
+							points.points.push_back(path_planning.get_node_list_element(i)->point);
+							line_list.points.push_back(path_planning.get_node_list_element(i)->point);
+							line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+						}
+						marker_pub.publish(points);
+						marker_pub.publish(line_list);
+						marker_pub.publish(goal_marker);
+						if (debugging){
+							ROS_INFO("I've exited markers");
+						}			
+					}
 				}
-			} else if (temp_path.size()==1) {
+				end_time = std::chrono::system_clock::now();
+				Elapsed = end_time - start_time;
+			}
+			path_planning.is_goal_found();
+			if (path_planning.get_goal_found()){
+				temp_path.clear();
+				temp_path=path_planning.find_path();
+				if(temp_path != path_to_goal && temp_path.size() !=1){
+					path_to_goal=temp_path;
+					path.points.clear();
+					path_planning.print_path();
+					path_planning.print_next_path_point();
+					ROS_INFO("found and printed path");
+					path.action = visualization_msgs::Marker::ADD;
+					for (int i = path_planning.path_length()-2; i >=0 ;i--){
+							path.points.push_back(path_planning.get_path_point(i));
+							path.points.push_back(path_planning.get_path_point(i+1));	
+							marker_pub.publish(path);
+					}
+				} else if (temp_path.size()==1) {
+					path.points.clear();
+					marker_pub.publish(path);
+				}
+				if( ((time(&timer) - begin) > 5)){
+					new_root=path_planning.get_next_path_node();
+					//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
+					if (new_root != path_planning.get_root_node()){
+						path_planning.change_root(path_planning.get_next_path_node());
+					}
+					ROS_INFO("root has changed hopefully");
+					ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
+					ROS_INFO(" ");
+					ROS_INFO(" ");
+					ROS_INFO(" ");
+					ROS_INFO(" ");
+					ROS_INFO(" ");
+					begin = time(&timer);
+					path_planning.print_path();
+				}
+			} else {
+				ROS_INFO("finding goal or at goal");
 				path.points.clear();
 				marker_pub.publish(path);
+				
 			}
-			if( ((time(&timer) - begin) > 5)){
-				new_root=path_planning.get_next_path_node();
-				ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-				if (new_root != path_planning.get_root_node()){
-					path_planning.change_root(path_planning.get_next_path_node());
-				}
-				ROS_INFO("root has changed hopefully");
-				ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-				ROS_INFO(" ");
-				ROS_INFO(" ");
-				ROS_INFO(" ");
-				ROS_INFO(" ");
-				ROS_INFO(" ");
-				begin = time(&timer);
-				path_planning.print_path();
-			}
-		}
-
-
-
-
-
 
 		r.sleep();
 	}   
