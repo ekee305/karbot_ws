@@ -443,7 +443,6 @@ public:
 						goal_found=true;
 						goal_node=neighbours[i];
 						goal_list.push_back(neighbours[i]);
-
 					}
 				}	 
 			}
@@ -739,6 +738,12 @@ public:
 		goal_found=false;
 	}
 
+	void clear_path_variables() {
+		path.clear();
+		path_nodes.clear();
+		path_cost=10000;
+	}
+
 };
 
 class robot_pose{
@@ -772,7 +777,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle g;
 	ros::NodeHandle a;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
-	ros::Publisher path_pub = p.advertise<path_planning::path_to_goal>("/path", 10);
+	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
 	//ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
 	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
@@ -951,15 +956,13 @@ int main(int argc, char **argv)
 			}
 			path_planning.is_goal_found();
 			if (path_planning.get_goal_found()){
-				ROS_INFO("i've got here 1");
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() !=1){
-					ROS_INFO("I've got here 2");
 					path_to_goal=temp_path;
 					path.points.clear();
-					path_planning.print_path();
-					path_planning.print_next_path_point();
+					//path_planning.print_path();
+					//path_planning.print_next_path_point();
 					ROS_INFO("found and printed path");
 					path.action = visualization_msgs::Marker::ADD;
 					for (int i = path_planning.path_length()-2; i >=0 ;i--){
@@ -967,6 +970,7 @@ int main(int argc, char **argv)
 							path.points.push_back(path_planning.get_path_point(i+1));	
 							marker_pub.publish(path);
 					}
+					path_pub.publish(path_planning.get_next_path_node()->point);
 				} else if (temp_path.size()==1) {
 					path.points.clear();
 					marker_pub.publish(path);
@@ -977,18 +981,12 @@ int main(int argc, char **argv)
 					if (new_root != path_planning.get_root_node()){
 						path_planning.change_root(path_planning.get_next_path_node());
 					}
-					ROS_INFO("root has changed hopefully");
-					ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-					ROS_INFO(" ");
-					ROS_INFO(" ");
-					ROS_INFO(" ");
-					ROS_INFO(" ");
-					ROS_INFO(" ");
 					begin = time(&timer);
 				}
 			} else {
 				ROS_WARN_ONCE("finding goal or at goal");
 				path.points.clear();
+				path_planning.clear_path_variables();
 				marker_pub.publish(path);
 				
 			}
