@@ -781,8 +781,8 @@ int main(int argc, char **argv)
 	ros::NodeHandle a;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
-	//ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
-	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
+	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
 	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
 	ros::Rate r(rate);
@@ -847,7 +847,7 @@ int main(int argc, char **argv)
   
   //marker setyp		
 	visualization_msgs::Marker points, line_list, goal_marker, path_points, path;
-	points.header.frame_id=line_list.header.frame_id= goal_marker.header.frame_id = path_points.header.frame_id = path.header.frame_id = "my_frame";
+	points.header.frame_id=line_list.header.frame_id= goal_marker.header.frame_id = path_points.header.frame_id = path.header.frame_id = "map";
 	points.header.stamp= line_list.header.stamp = goal_marker.header.stamp = path_points.header.stamp = path.header.stamp = ros::Time::now();
 	points.ns="nodes";
 	goal_marker.ns="goal_node";
@@ -966,7 +966,7 @@ int main(int argc, char **argv)
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
 			temp_path.clear();
-			temp_path=path_planning.find_path();
+			temp_path=path_planning.find_path();path_pub.publish(path_planning.get_root_node()->point);
 			if(temp_path != path_to_goal && temp_path.size() !=1){
 				path_to_goal=temp_path;
 				path.points.clear();
@@ -984,7 +984,7 @@ int main(int argc, char **argv)
 				path.points.clear();
 				marker_pub.publish(path);
 			}
-			if ((time(&timer) - begin) > 5  /*path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.3*/){
+			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.3){
 				new_root=path_planning.get_next_path_node();
 				//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				if (new_root != path_planning.get_root_node()){
@@ -997,6 +997,7 @@ int main(int argc, char **argv)
 			path.points.clear();
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
+			path_pub.publish(path_planning.get_root_node()->point);
 		}
 		ros::spinOnce();
 		r.sleep();
