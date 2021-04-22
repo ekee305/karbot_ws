@@ -36,6 +36,7 @@
 #define OBSTACLE_THRESHOLD 20.0
 #define GRID_WIDTH 10
 #define GRID_HEIGHT 10
+#define SEARCH_AREA 100
 
 //test for branch
 //lol
@@ -48,10 +49,11 @@ int map_width,map_height;
 geometry_msgs::Point position;
 double roll,pitch, yaw;
 
-std::default_random_engine re;
+std::random_device rd;
+std::default_random_engine re(rd());
 geometry_msgs::Point goal;
 bool goal_recieved=false;
-bool debugging=true;
+bool debugging=false;
 bool first_pose_loaded=false;
 
 
@@ -103,13 +105,13 @@ private:
 	double map_resolution; // get this from the map data coming from the server.
 	double grid_resolution;
 	int density;
-	double area_of_search_space;
+	int k; //just for testing moving the root
 
-    std::vector<geometry_msgs::Point> all_nodes;
+
 	std::vector<geometry_msgs::Point> path;
 
 
-	geometry_msgs::Point start;	
+	geometry_msgs::Point root_point;	
 
 	node* root;
 	node* goal_node;
@@ -125,14 +127,14 @@ private:
 
 public:
 	RRT(double d, double x_start, double y_start, double r,double g_r, double goal_r,int den, double neighbour_r, double rs) : distance (d), map_resolution(r),goal_radius(goal_r), density(den), neighbour_radius(neighbour_r),grid_resolution(g_r),node_dist(rs) {
-		start.x=x_start;
-		start.y=y_start;		
+		root_point.x=x_start;
+		root_point.y=y_start;		
 		srand((unsigned int)time(NULL));
 		I=0;
 		create_root();
 		goal_found=false;
 		path_cost=10000;
-		area_of_search_space=100;
+		k=0;
 	}
 
 	void create_root() 
@@ -141,9 +143,8 @@ public:
 		new_node->ID = I++;
 		new_node->parent = NULL;
 		new_node->cost = 0;
-		new_node->point.x=start.x;
-		new_node->point.y=start.y;
-		all_nodes.push_back(start);
+		new_node->point.x=root_point.x;
+		new_node->point.y=root_point.y;
 		node_list.push_back(new_node);
 		add_to_spatial_index(new_node);
 		root = new_node;
@@ -158,10 +159,9 @@ public:
 		new_node->ID = I++;
 		new_node->point.x=new_point.x;
 		new_node->point.y=new_point.y;
-		new_node->parent = parent; //use postion of parent in all_nodes to find pointer to the 
+		new_node->parent = parent;
 		new_node->cost = calculate_cost(parent,new_node);
 		update_children(parent, new_node);
-		all_nodes.push_back(new_point);
 		node_list.push_back(new_node);
 		add_to_spatial_index(new_node);
 		return(new_node);
@@ -206,10 +206,12 @@ public:
 		}
 		return;
 	}
-	
-	geometry_msgs::Point get_start() {
-		return(start);
+
+	geometry_msgs::Point get_root(){
+		return(root_point);
 	}
+	
+
 
 	geometry_msgs::Point get_goal() {
 		return(goal);
@@ -228,9 +230,6 @@ public:
 	}
 
 	
-	geometry_msgs::Point get_all_nodes_value(int i) {
-		return(all_nodes[i]);
-	}
 
 	std::vector<node*> get_node_list(){
 		return(node_list);
@@ -352,8 +351,8 @@ public:
 		}
 		int lower_x_grid,upper_x_grid,lower_y_grid,upper_y_grid;
 		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_point);
-		ROS_INFO("test point is (%lf,%lf)",temp_point.x,temp_point.y);
-		ROS_INFO("grid is (%d,%d)",grid.x,grid.y);
+		//ROS_INFO("test point is (%lf,%lf)",temp_point.x,temp_point.y);
+		//ROS_INFO("grid is (%d,%d)",grid.x,grid.y);
 		neighbours.clear();
 
 		/*for (int i =0; i< node_list.size();i++){
@@ -382,14 +381,14 @@ public:
 			} else {
 				upper_y_grid=grid.y+search_width;
 			}
-			ROS_INFO("X range (%d,%d)",lower_x_grid,upper_x_grid);
-			ROS_INFO("Y range (%d,%d)",lower_y_grid,upper_y_grid);
+			//ROS_INFO("X range (%d,%d)",lower_x_grid,upper_x_grid);
+			//ROS_INFO("Y range (%d,%d)",lower_y_grid,upper_y_grid);
 			
 			for(int i=lower_x_grid;i <= upper_x_grid;i++){
 				for (int j=lower_y_grid;j <=upper_y_grid;j++){
-					ROS_INFO("Checking grid (%d,%d)",i,j);
+					//ROS_INFO("Checking grid (%d,%d)",i,j);
 					for(int k=0; k < spatial_grid[i][j].size();k++){
-						ROS_INFO("spacial_index (%d,%d) point (%lf,%lf)",i,j,spatial_grid[i][j].at(k)->point.x,spatial_grid[i][j].at(k)->point.y);
+						//ROS_INFO("spacial_index (%d,%d) point (%lf,%lf)",i,j,spatial_grid[i][j].at(k)->point.x,spatial_grid[i][j].at(k)->point.y);
 						neighbours.push_back(spatial_grid[i][j].at(k));
 					}
 				}
@@ -432,6 +431,9 @@ public:
 	}
 
 	void is_goal_found(){
+		if (debugging){
+			ROS_INFO("I've entered is goal found");
+		}	
 		double x_diff,y_diff,cost_to_goal;
 		find_neighbours(goal);
 		for (int i = 0;i<neighbours.size();i++){
@@ -447,18 +449,17 @@ public:
 				}
 			}	 
 		}
+		if (debugging){
+			ROS_INFO("I've exited is goal found");
+		}	
 		return;
 	}
 
-	bool at_start(geometry_msgs::Point test) {
-		if (test == start){
-			return (true);
-		} else {
-			return (false);
-		}
-	}
-
 	std::vector<geometry_msgs::Point> find_path() {
+		if (debugging){
+			ROS_INFO("I've entered find path");
+		}	
+		
 		for (int i=0;i<goal_list.size();i++){
 			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
@@ -474,7 +475,7 @@ public:
 			temp_point.y=node_ptr->point.y;
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
-			while(temp_point != start) 
+			while(node_ptr->parent != NULL) 
 			{
 				node_ptr=get_parent(node_ptr);
 				temp_point.x=node_ptr->point.x;
@@ -483,6 +484,9 @@ public:
 				path_nodes.push_back(node_ptr);
 			}
 		}
+		if (debugging){
+			ROS_INFO("I've entered find path");
+		}	
 		return(path);
 
 	}
@@ -645,7 +649,7 @@ public:
 
 	void update_neighbour_radius(){
 
-		neighbour_radius=sqrt((area_of_search_space*double (density))/(PI*double(node_list.size())));
+		neighbour_radius=sqrt((SEARCH_AREA*double (density))/(PI*double(node_list.size())));
 		if (neighbour_radius<node_dist){
 			neighbour_radius=node_dist;
 		}
@@ -683,17 +687,12 @@ public:
 
 	void change_root(node* new_root){
 		int node_list_index;
-		ROS_INFO("I get here 1");
 		remove_child_from_parent(new_root);
 		new_root->children.push_back(root);
 		root->parent=new_root;
 		new_root->parent=NULL;
 		new_root->cost=0;
-		ROS_INFO("I get here 2");
 		root->cost=calculate_cost(root->parent,root);
-		ROS_INFO("I get here 3");
-
-		ROS_INFO("I get here 4");
 		for(int i=0;i<node_list.size();i++){
 			if(node_list[i]==new_root){
 				node_list_index=i;
@@ -702,11 +701,19 @@ public:
 		node_list[0]=new_root;
 		node_list[node_list_index]=root;
 		root=new_root;
+		root_point.x=root->point.x;
+		root_point.y=root->point.y;
 		rewire_neighbours(root);
 	}
 
-	node* get_path_node(){
-		return(path_nodes[path_nodes.size()-2]);
+	node* get_next_path_node(){
+		node* temp_node;
+		if 	(path_nodes.size()==1){
+			temp_node=path_nodes[0];
+		} else {
+			temp_node=path_nodes[path_nodes.size()-2];
+		}
+		return(temp_node);
 	}
 
 	node* get_root_node(){
@@ -738,7 +745,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=1;
+	static const int rate=100;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
@@ -795,7 +802,7 @@ int main(int argc, char **argv)
 
 	static const double map_resolution=0.05;
 	static const double grid_resolution=1;
-	static const double radius_goal=0.2;
+	static const double radius_goal=0.4;
 	static const int radius_neighbour = 1.0;
 	static const double dist_node = 0.5;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
@@ -803,6 +810,7 @@ int main(int argc, char **argv)
 	node* closest_node;
 	node* lowest_cost_neighbour;
 	node* new_node;
+	node* new_root;
 	int map_array_value=0;
 	std::vector<geometry_msgs::Point> temp_path,path_to_goal;
 
@@ -860,7 +868,7 @@ int main(int argc, char **argv)
  
 
 
-	points.points.push_back(path_planning.get_start());
+	points.points.push_back(path_planning.get_root());
 	goal_marker.points.push_back(goal);
 	marker_pub.publish(goal_marker);
 	
@@ -871,7 +879,7 @@ int main(int argc, char **argv)
 
 	time_t timer;
 	int begin = time(&timer);
-	bool one_shot = true;
+
     
 	while(ros::ok()){
 		ros::spinOnce();
@@ -881,7 +889,7 @@ int main(int argc, char **argv)
 		Elapsed = end_time - start_time;
 		while (Elapsed.count() < 10.0){
 			rand_point=path_planning.get_rand_point(unif_x,unif_y);
-			closest_node=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
+			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
 			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
 			//ROS_INFO("Array value is %d",array_grid);
@@ -919,14 +927,14 @@ int main(int argc, char **argv)
 			end_time = std::chrono::system_clock::now();
 			Elapsed = end_time - start_time;
 		}
-		/*path_planning.is_goal_found();
+		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
 			temp_path.clear();
 			temp_path=path_planning.find_path();
-			if(temp_path != path_to_goal){
+			if(temp_path != path_to_goal && temp_path.size() !=1){
 				path_to_goal=temp_path;
 				path.points.clear();
-
+				path_planning.print_path();
 				ROS_INFO("found and printed path");
 				path.action = visualization_msgs::Marker::ADD;
 				for (int i = path_planning.path_length()-2; i >=0 ;i--){
@@ -934,13 +942,16 @@ int main(int argc, char **argv)
 						path.points.push_back(path_planning.get_path_point(i+1));	
 						marker_pub.publish(path);
 				}
-			
-				
-			}*/
-			if( ((time(&timer) - begin) > 5) && one_shot ){
+			} else if (temp_path.size()==1) {
+				path.points.clear();
+				marker_pub.publish(path);
+			}
+			if( ((time(&timer) - begin) > 5)){
+				new_root=path_planning.get_next_path_node();
 				ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-				path_planning.change_root(path_planning.get_node_list_element(1));
-				one_shot=false;
+				if (new_root != path_planning.get_root_node()){
+					path_planning.change_root(path_planning.get_next_path_node());
+				}
 				ROS_INFO("root has changed hopefully");
 				ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				ROS_INFO(" ");
@@ -948,8 +959,10 @@ int main(int argc, char **argv)
 				ROS_INFO(" ");
 				ROS_INFO(" ");
 				ROS_INFO(" ");
+				begin = time(&timer);
+				path_planning.print_path();
 			}
-		//}
+		}
 
 
 
