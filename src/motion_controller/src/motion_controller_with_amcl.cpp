@@ -84,7 +84,7 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (heading_error > PI/8 || heading_error <-PI/8){
+        if (heading_error > PI || heading_error <-PI){
             velocity=0;
         }
         /*if (steer_velocity < 0.5){
