@@ -738,7 +738,7 @@ public:
 		path_cost=10000;
 	}
 
-	void rewire_random_nodes{
+	void rewire_random_nodes(){
 
 	}
 
@@ -747,7 +747,7 @@ public:
 	}
 
 	void add_to_root_queue(node* temp_node){
-		
+
 	}
 };
 
