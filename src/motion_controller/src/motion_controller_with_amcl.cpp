@@ -10,7 +10,7 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
-#define MAX_SPEED 0.6
+#define MAX_SPEED 0.5
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
@@ -77,7 +77,7 @@ public:
     {
         double kps,kpv;
         kps=1.8;
-        kpv=1.4;
+        kpv=4;
         update_errors();
         steer_velocity=kps*heading_error;
         velocity=kpv*dist;
@@ -152,12 +152,12 @@ int main(int argc, char **argv)
     control car(yaw,position.x,position.y,next_path_point.x,next_path_point.y);
     car.p_control();
     
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(100);
     while (ros::ok())
     {
         ROS_INFO("point=(%lf,%lf,%lf)",position.x,position.y,yaw);
         car.update_variables(position.x,position.y,yaw,next_path_point);
-        if (car.get_dist_to_goal(next_path_point) < 0.25) {
+        if (car.get_dist_to_goal(next_path_point) < 0.1) {
             reached_goal=true;
             control_signal.linear.x=0.000000;
             control_signal.angular.z=0.000000;

@@ -1,8 +1,8 @@
 		// add grid based spacial indexing
 //replace with reolution that is given with map data.
 //fix hard coded grid width
-		//fix rand point cause it ain't rand
-		//make distance function
+//fix rand point cause it ain't rand
+//make distance function
 //remeber to change grid width stuff as well and area of grid
 // deal with goal outside map
 //server to request map
@@ -35,10 +35,9 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 17
-#define GRID_HEIGHT 33
-#define GRID_RESOLUTION 2
-#define SEARCH_AREA 1425
+#define GRID_WIDTH 10
+#define GRID_HEIGHT 10
+#define SEARCH_AREA 100
 
 //test for branch
 //lol
@@ -359,23 +358,23 @@ public:
 		int search_width=0;
 		while(neighbours.empty()){
 			search_width++;
-			if((grid.x-search_width)<0){
+			if((grid.x-search_width)<20){
 				lower_x_grid=0;
 			} else {
 				lower_x_grid=grid.x-search_width;
 			}
-			if((grid.x+search_width)>(GRID_WIDTH-1)){
-				upper_x_grid=GRID_WIDTH-1;
+			if((grid.x+search_width)>(29)){
+				upper_x_grid=29;
 			} else{
 				upper_x_grid=grid.x+search_width;
 			}
-			if((grid.y-search_width)<0){
+			if((grid.y-search_width)<20){
 				lower_y_grid=0;
 			} else {
 				lower_y_grid=grid.y-search_width;
 			}
-			if((grid.y+search_width)>(GRID_HEIGHT-1)){
-				upper_y_grid=GRID_HEIGHT-1;
+			if((grid.y+search_width)>(29)){
+				upper_y_grid=29;
 			} else {
 				upper_y_grid=grid.y+search_width;
 			}
@@ -643,12 +642,7 @@ public:
 			ROS_INFO("I've entered add_to_spatial_index");
 		}
 		path_planning::grid_cell grid=find_grid_cell_for_spatial_indexing(temp_node->point);
-		//ROS_INFO("point is (%.2lf,%.2lf)",temp_node->point.x,temp_node->point.y);
-		//ROS_INFO("(%d,%d)",grid.x,grid.y);
 		spatial_grid[grid.x][grid.y].push_back(temp_node);
-		/*for (int i =0; i < spatial_grid[grid.x][grid.y].size();i++){	
-			ROS_INFO("spacial_index point (%lf,%lf)",spatial_grid[grid.x][grid.y].at(i)->point.x,spatial_grid[grid.x][grid.y].at(i)->point.y);
-		}*/
 	}
 
 	void update_neighbour_radius(){
@@ -660,9 +654,6 @@ public:
 	}
 
 	bool check_node_density(){
-		//ROS_INFO("neighbour_size = %d",neighbours.size());
-		//ROS_INFO("Density = %d",density);
-		//ROS_INFO("neighbour_radius = %lf",neighbour_radius);
 		if (neighbours.size() > density){
 			return (false);
 		} else {
@@ -672,7 +663,6 @@ public:
 
 	bool node_dist_check(geometry_msgs::Point test_point, node* closest) {
 		double dist=get_dist(closest->point,test_point);
-		//ROS_INFO("dist = %lf",dist);
 		if (dist > node_dist){
 			return(true);
 		} else {
@@ -748,6 +738,17 @@ public:
 		path_cost=10000;
 	}
 
+	void rewire_random_nodes{
+
+	}
+
+	void add_to_random_queue(node* temp_node){
+
+	}
+
+	void add_to_root_queue(node* temp_node){
+		
+	}
 };
 
 class robot_pose{
@@ -773,7 +774,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=1000;
+	static const int rate=100;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
@@ -797,10 +798,10 @@ int main(int argc, char **argv)
 		sleep(1);
 	}
 	ROS_WARN_ONCE("Map recieved");
-    while(!first_pose_loaded){
+    /*while(!first_pose_loaded){
         ROS_WARN_ONCE("Waiting for AMCL pose");
 		ros::spinOnce();
-    }
+    }*/
 	ROS_WARN_ONCE("Pose recieved");
 
 	while (!goal_received){
@@ -810,10 +811,10 @@ int main(int argc, char **argv)
 	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 
 	// change to be flexible with map size
-	const double upper_x=32;  
-	const double lower_x=7; 
-	const double upper_y=64;
-	const double lower_y=7;   
+	const double upper_x=30;  
+	const double lower_x=20; 
+	const double upper_y=30;
+	const double lower_y=20;   
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
@@ -821,15 +822,18 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.75;
-	static const int density_of_nodes=200;
-	static const double x_start=position.x; 
-	static const double y_start=position.y;  
+	static const double child_distance=0.5;
+	static const int density_of_nodes=20;
+	//static const double x_start=position.x; 
+	//static const double y_start=position.y;  
+	static const double x_start=25; 
+	static const double y_start=25;  
+
 	static const double map_resolution=0.05;
-	static const double grid_resolution=GRID_RESOLUTION;
+	static const double grid_resolution=1;
 	static const double radius_goal=0.4;
 	static const int radius_neighbour = 0.5;
-	static const double dist_node = 2.0;
+	static const double dist_node = 0.25;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
@@ -982,7 +986,7 @@ int main(int argc, char **argv)
 				path.points.clear();
 				marker_pub.publish(path);
 			}
-			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.1){
+			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.3){
 				new_root=path_planning.get_next_path_node();
 				//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				if (new_root != path_planning.get_root_node()){
