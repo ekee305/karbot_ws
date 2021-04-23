@@ -84,7 +84,7 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (heading_error > PI/8){
+        if (heading_error > PI/8 || heading_error <-PI/8){
             velocity=0;
         }
         /*if (steer_velocity < 0.5){
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     {
         ROS_INFO("point=(%lf,%lf,%lf)",position.x,position.y,yaw);
         car.update_variables(position.x,position.y,yaw,next_path_point);
-        if (car.get_dist_to_goal(next_path_point) < 0.1) {
+        if (car.get_dist_to_goal(next_path_point) < 0.2) {
             reached_goal=true;
             control_signal.linear.x=0.000000;
             control_signal.angular.z=0.000000;

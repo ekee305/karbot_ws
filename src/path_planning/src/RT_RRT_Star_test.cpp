@@ -28,7 +28,8 @@
 #include <time.h>
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include <tf/tf.h>
-#include <chrono> 
+#include <chrono>
+#include <queue> 
 
 
 
@@ -122,6 +123,8 @@ private:
 	std::vector<node*> goal_list;
 	std::vector<node*> spatial_grid[31][31];
 	std::vector<node*> path_nodes;
+	std::deque<node*> qr;
+	std::deque<node*> qs;
 	
 	int I;
 	bool goal_found;
@@ -293,9 +296,9 @@ public:
 		return(closest_neighbour);
 	}
 	
-	void rewire_neighbours (node* test_node) {
+	void rewire_root_neighbours (node* test_node) {
 		if (debugging){
-			ROS_INFO("I've entered rewire neighbours");
+			ROS_INFO("I've entered rewire root neighbours");
 		}
 		double total_cost;
 		find_neighbours(test_node->point);
@@ -304,7 +307,31 @@ public:
 			if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 				remove_child_from_parent(neighbours[i]);
 				neighbours[i]->parent=test_node;
-				neighbours[i]->cost=total_cost;	
+				neighbours[i]->cost=total_cost;
+				//if(check_qs(neighbours[i])){
+				add_to_root_queue(neighbours[i]);
+				//}
+			}
+		}
+		if (debugging){
+			ROS_INFO("I'm leaving rewire neighbours");
+		}
+		return;
+	}
+
+	void rewire_random_node_neighbours (node* test_node) {
+		if (debugging){
+			ROS_INFO("I've entered rewire random node neighbours");
+		}
+		double total_cost;
+		find_neighbours(test_node->point);
+		for (int i = 0;i<neighbours.size();i++){
+			total_cost=calculate_cost(test_node,neighbours[i]);
+			if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
+				remove_child_from_parent(neighbours[i]);
+				neighbours[i]->parent=test_node;
+				neighbours[i]->cost=total_cost;
+				add_to_random_queue(neighbours[i]);	
 			}
 		}
 		if (debugging){
@@ -697,7 +724,7 @@ public:
 		root=new_root;
 		root_point.x=root->point.x;
 		root_point.y=root->point.y;
-		rewire_neighbours(root);
+		//rewire_neighbours(root);
 	}
 
 	void print_next_path_point(){
@@ -739,15 +766,46 @@ public:
 	}
 
 	void rewire_random_nodes(){
-
+		for(int i=0;i<50;i++){
+		if(qr.empty()){
+			break;
+		}
+		rewire_random_node_neighbours(qr.front());
+		qr.pop_front();
+		}
+	}
+	
+	void rewire_from_root(){
+		for(int i = 0;i<100;i++){
+			if(qs.empty()){
+				qs.push_back(root);
+			}
+			rewire_root_neighbours(qs.front());
+			qs.pop_front();
+		}
 	}
 
 	void add_to_random_queue(node* temp_node){
-
+		qr.push_back(temp_node);
 	}
 
 	void add_to_root_queue(node* temp_node){
+		qs.push_back(temp_node);
+	}
 
+	void clear_qs(){
+		qs.clear();
+	}
+
+	bool check_qs(node* temp_node){
+		bool is_in_qs=false;
+		for(int i=0;i<qs.size();i++){
+			if(temp_node==qs[i]){
+				is_in_qs=true;
+				break;
+			}
+		}
+		return(is_in_qs);
 	}
 };
 
@@ -823,11 +881,11 @@ int main(int argc, char **argv)
   
   //initialize RRT object and variables
 	static const double child_distance=0.5;
-	static const int density_of_nodes=20;
-	//static const double x_start=position.x; 
-	//static const double y_start=position.y;  
-	static const double x_start=25; 
-	static const double y_start=25;  
+	static const int density_of_nodes=10;
+	static const double x_start=position.x; 
+	static const double y_start=position.y;  
+	//static const double x_start=25; 
+	//static const double y_start=25;  
 
 	static const double map_resolution=0.05;
 	static const double grid_resolution=1;
@@ -922,7 +980,7 @@ int main(int argc, char **argv)
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();
 		Elapsed = end_time - start_time;
-		while (Elapsed.count() < 10.0){
+		while (Elapsed.count() < 5.0){
 			rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
@@ -935,36 +993,47 @@ int main(int argc, char **argv)
 				lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
 				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
 					new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
-					path_planning.rewire_neighbours(new_node); // rewires neighbours of new point;
-
-					//marker updates
-					if (debugging){
-						ROS_INFO("I've entered markers");
-					}			
-					points.action = visualization_msgs::Marker::DELETEALL;
-					line_list.points.clear();
-					points.points.clear();
-					goal_marker.points.clear();
-					points.action = visualization_msgs::Marker::ADD;
-					points.points.push_back(path_planning.get_node_list_element(0)->point);					
-					for(int i=1;i<path_planning.get_node_list().size()-1;i++){
-						points.points.push_back(path_planning.get_node_list_element(i)->point);
-						line_list.points.push_back(path_planning.get_node_list_element(i)->point);
-						line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
-					}
-					goal_marker.points.push_back(goal);
-					marker_pub.publish(points);
-					marker_pub.publish(line_list);
-					marker_pub.publish(goal_marker);
-
-					if (debugging){
-						ROS_INFO("I've exited markers");
-					}			
+					path_planning.add_to_random_queue(new_node);
+					//path_planning.rewire_neighbours(new_node);
+		
+				} else if (lowest_cost_neighbour != NULL ){
+					path_planning.add_to_random_queue(lowest_cost_neighbour);
 				}
 			}
+			path_planning.rewire_random_nodes(); 
+			path_planning.rewire_from_root();
+
 			end_time = std::chrono::system_clock::now();
 			Elapsed = end_time - start_time;
 		}
+
+				//marker updates
+		if (debugging){
+			ROS_INFO("I've entered markers");
+		}						
+			
+		points.action = visualization_msgs::Marker::DELETEALL;
+		line_list.points.clear();
+		points.points.clear();
+		goal_marker.points.clear();
+		points.action = visualization_msgs::Marker::ADD;
+		points.points.push_back(path_planning.get_node_list_element(0)->point);					
+		points.points.push_back(path_planning.get_node_list_element(0)->point);					
+		points.points.push_back(path_planning.get_node_list_element(0)->point);					
+		for(int i=1;i<path_planning.get_node_list().size()-1;i++){
+			points.points.push_back(path_planning.get_node_list_element(i)->point);
+			line_list.points.push_back(path_planning.get_node_list_element(i)->point);
+			line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+		}
+		goal_marker.points.push_back(goal);
+		marker_pub.publish(points);
+		marker_pub.publish(line_list);
+		marker_pub.publish(goal_marker);
+
+		if (debugging){
+			ROS_INFO("I've exited markers");
+		}
+
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
 			temp_path.clear();
@@ -986,14 +1055,16 @@ int main(int argc, char **argv)
 				path.points.clear();
 				marker_pub.publish(path);
 			}
-			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.3){
+			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.2){
 				new_root=path_planning.get_next_path_node();
 				//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				if (new_root != path_planning.get_root_node()){
 					path_planning.change_root(path_planning.get_next_path_node());
+					path_planning.clear_qs();
+					path_planning.rewire_from_root();
 				}
 				begin = time(&timer);
-			}
+			}	
 		} else {
 			ROS_WARN_ONCE("finding goal or at goal");
 			path.points.clear();
