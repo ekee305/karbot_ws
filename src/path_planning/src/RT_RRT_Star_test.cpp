@@ -1037,7 +1037,7 @@ int main(int argc, char **argv)
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
 			temp_path.clear();
-			temp_path=path_planning.find_path();path_pub.publish(path_planning.get_root_node()->point);
+			temp_path=path_planning.find_path();
 			if(temp_path != path_to_goal && temp_path.size() !=1){
 				path_to_goal=temp_path;
 				path.points.clear();
