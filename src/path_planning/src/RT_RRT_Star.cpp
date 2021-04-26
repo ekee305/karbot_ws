@@ -122,7 +122,7 @@ private:
 	std::vector<node*> neighbours;
 	std::vector<node*> node_list;
 	std::vector<node*> goal_list;
-	std::vector<node*> spatial_grid[31][31];
+	std::vector<node*> spatial_grid[GRID_WIDTH+1][GRID_HEIGHT+1];
 	std::vector<node*> path_nodes;
 	std::deque<node*> qr;
 	std::deque<node*> qs;
