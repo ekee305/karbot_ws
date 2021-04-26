@@ -10,7 +10,7 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
-#define MAX_SPEED 0.6
+#define MAX_SPEED 0.5
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
@@ -77,18 +77,18 @@ public:
     {
         double kps,kpv;
         kps=1.8;
-        kpv=4;
+        kpv=1.8;
         update_errors();
         steer_velocity=kps*heading_error;
         velocity=kpv*dist;
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (velocity < 0.3){
-            velocity=0.3;
+        if (velocity < 0.4){
+            velocity=0.4;
         }
-        if (heading_error > PI/2 || heading_error <-PI/2){
-            velocity=0;
+        if (heading_error > PI/4 || heading_error <-PI/4){
+            velocity=0.0;
         }
         /*if (steer_velocity < 0.5){
             steer_velocity=0.5;
