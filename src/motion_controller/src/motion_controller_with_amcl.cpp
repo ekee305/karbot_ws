@@ -10,7 +10,7 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
-#define MAX_SPEED 0.5
+#define MAX_SPEED 0.3
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
@@ -84,8 +84,8 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (velocity < 0.4){
-            velocity=0.4;
+        if (velocity < 0.2){
+            velocity=0.2;
         }
         if (heading_error > PI/4 || heading_error <-PI/4){
             velocity=0.0;

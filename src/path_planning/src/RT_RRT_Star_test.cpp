@@ -192,12 +192,12 @@ public:
 	double calculate_cost (node* parent_node, node* child_node) //
 	{
 		double cost;
-    	if(parent_node->parent != NULL){
-			cost=calculate_cost(parent_node->parent,parent_node)+get_dist(parent_node->point,child_node->point);
-		} else if (check_line_obstacle(parent_node->point,child_node->point)) {
-			cost=INFINITY;			
-		} else {
+		if (check_line_obstacle(parent_node->point,child_node->point)) {
+			cost=INFINITY;	
+		} else if(parent_node->parent == NULL) {
 			cost=get_dist(parent_node->point,child_node->point);
+		} else {
+			cost=calculate_cost(parent_node->parent,parent_node)+get_dist(parent_node->point,child_node->point); 
 		}
 		return(cost);
 	}
@@ -206,11 +206,11 @@ public:
 	double get_cost(node *temp_node)
 	{
 		double cost;
-		if(temp_node->parent!=NULL){
+		if(temp_node->parent==NULL){
+			cost=root->cost;
+		} else {
 			cost=calculate_cost(temp_node->parent,temp_node);
 			temp_node->cost=cost;
-		} else {
-			cost=0;
 		}
 		return(cost);
 	}
@@ -324,6 +324,10 @@ public:
 		}
 		
 		double total_cost;
+		if (check_grid_for_obs(find_grid_cell(test_node->point))){
+			test_node->cost=INFINITY;
+			return;
+		}
 		find_neighbours(test_node->point);
 		for (int i = 0;i<neighbours.size();i++){
 			if(get_dist(neighbours[i]->point,test_node->point) < node_dist){	
@@ -332,9 +336,9 @@ public:
 					remove_child_from_parent(neighbours[i]);
 					neighbours[i]->parent=test_node;
 					neighbours[i]->cost=total_cost;
-					//if(check_qs(neighbours[i])){
-					add_to_root_queue(neighbours[i]);
-					//}
+					if(!check_qs(neighbours[i])){
+						add_to_root_queue(neighbours[i]);
+					}
 				}
 			}
 		}
@@ -928,7 +932,7 @@ int main(int argc, char **argv)
   
   //initialize RRT object and variables
 	static const double child_distance=0.5;
-	static const int density_of_nodes=20;
+	static const int density_of_nodes=4;
 	static const double x_start=position.x; 
 	static const double y_start=position.y;  
 	//static const double x_start=25; 
@@ -1083,35 +1087,41 @@ int main(int argc, char **argv)
 
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
-			temp_path.clear();
-			temp_path=path_planning.find_path();
-			if(temp_path != path_to_goal && temp_path.size() !=1){
-				path_to_goal=temp_path;
-				path.points.clear();
-				//path_planning.print_path();
-				//path_planning.print_next_path_point();
-				ROS_INFO("found and printed path");
-				path.action = visualization_msgs::Marker::ADD;
-				for (int i = path_planning.path_length()-2; i > 0 ;i--){
-						path.points.push_back(path_planning.get_path_point(i));
-						path.points.push_back(path_planning.get_path_point(i+1));	
-						marker_pub.publish(path);
+
+				temp_path.clear();
+				temp_path=path_planning.find_path();
+				if(temp_path != path_to_goal && temp_path.size() !=1){
+					path_to_goal=temp_path;
+					path.points.clear();
+					//path_planning.print_path();
+					//path_planning.print_next_path_point();
+					ROS_INFO("found and printed path");
+					path.action = visualization_msgs::Marker::ADD;
+					for (int i = path_planning.path_length()-2; i > 0 ;i--){
+							path.points.push_back(path_planning.get_path_point(i));
+							path.points.push_back(path_planning.get_path_point(i+1));	
+							marker_pub.publish(path);
+					}
+					if(path_planning.get_goal_node_cost()!=INFINITY){
+						path_pub.publish(path_planning.get_next_path_point());
+					} else {
+						path_pub.publish(path_planning.dummy_point);
+					}
+				} else if (temp_path.size()==1) {
+					path.points.clear();
+					marker_pub.publish(path);
 				}
-			path_pub.publish(path_planning.get_root_node()->point);
-			} else if (temp_path.size()==1) {
-				path.points.clear();
-				marker_pub.publish(path);
-			}
-			if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.3){
-				new_root=path_planning.get_next_path_node();
-				if (new_root != path_planning.get_root_node()){
-					path_planning.change_root(path_planning.get_next_path_node());
-					path_planning.clear_qs();
-					path_planning.rewire_from_root();
+				if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.2){
+					new_root=path_planning.get_next_path_node();
+					if (new_root != path_planning.get_root_node()){
+						path_planning.change_root(path_planning.get_next_path_node());
+						path_planning.clear_qs();
+						path_planning.rewire_from_root();
+					}
+					//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				}
-				//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-			}
-			ROS_INFO("path cost = %lf ",path_planning.get_goal_node()->cost);	
+				ROS_INFO("path cost = %lf ",path_planning.get_goal_node_cost());	
+		
 		} else {
 			ROS_WARN("finding goal or at goal");
 			path.points.clear();
