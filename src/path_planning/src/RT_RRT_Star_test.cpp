@@ -60,6 +60,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
+bool display=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -100,7 +101,7 @@ void mapUpdateCallback(const map_msgs::OccupancyGridUpdate &msg){
 				map[(msg.y+j)*map_width+(msg.x+i)]=msg.data[k++];
 			}
 		}
-		ROS_INFO("Map updated");
+		//ROS_INFO("Map updated");
 	}
 }
 
@@ -342,8 +343,11 @@ public:
 				}
 			}
 		}
+		//ROS_INFO("i got here 1");
 		if(test_node!=root){
+			//ROS_INFO("i got here 2");
 			if (check_line_obstacle(test_node->parent->point,test_node->point)){
+				//ROS_INFO("i got here 3");
 				test_node->cost=INFINITY;
 			}
 		}
@@ -359,6 +363,10 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered rewire random node neighbours");
 		}
+		if (check_grid_for_obs(find_grid_cell(test_node->point))){
+			test_node->cost=INFINITY;
+			return;
+		}
 		double total_cost;
 		find_neighbours(test_node->point);
 		for (int i = 0;i<neighbours.size();i++){
@@ -370,6 +378,11 @@ public:
 					neighbours[i]->cost=total_cost;
 					add_to_random_queue(neighbours[i]);	
 				}
+			}
+		}
+		if(test_node!=root){
+			if (check_line_obstacle(test_node->parent->point,test_node->point)){
+				test_node->cost=INFINITY;
 			}
 		}
 		if (debugging){
@@ -889,11 +902,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle m;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
-	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1000, chatterCallback);
+	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
-	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
-	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1000, goalCallback);
-	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1000, mapUpdateCallback);
+	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
+	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
+	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
 	ros::Rate r(rate);
 
 	path_planning::path_to_goal path_to_publish;
@@ -931,7 +944,7 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.5;
+	static const double child_distance=0.75;
 	static const int density_of_nodes=4;
 	static const double x_start=position.x; 
 	static const double y_start=position.y;  
@@ -941,8 +954,8 @@ int main(int argc, char **argv)
 	static const double map_resolution=0.05;
 	static const double grid_resolution=GRID_RESOLUTION;
 	static const double radius_goal=0.3;
-	static const int radius_neighbour = 0.5;
-	static const double dist_node = 0.5;
+	static const int radius_neighbour = 0.75;
+	static const double dist_node = 0.75;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
@@ -1029,7 +1042,7 @@ int main(int argc, char **argv)
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();
 		Elapsed = end_time - start_time;
-		while (Elapsed.count() < 50.0){
+		while (Elapsed.count() < 20.0){
 			rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
@@ -1061,28 +1074,30 @@ int main(int argc, char **argv)
 			ROS_INFO("I've entered markers");
 		}						
 			
-		points.action = visualization_msgs::Marker::DELETEALL;
-		line_list.points.clear();
-		points.points.clear();
-		goal_marker.points.clear();
-		points.action = visualization_msgs::Marker::ADD;
-		points.points.push_back(path_planning.get_node_list_element(0)->point);					
-		points.points.push_back(path_planning.get_node_list_element(0)->point);					
-		points.points.push_back(path_planning.get_node_list_element(0)->point);					
-		for(int i=1;i<path_planning.get_node_list().size()-1;i++){
-			points.points.push_back(path_planning.get_node_list_element(i)->point);
-			if(path_planning.get_node_list_element(i)->cost!=INFINITY){
-				line_list.points.push_back(path_planning.get_node_list_element(i)->point);
-				line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+		if (display){
+			points.action = visualization_msgs::Marker::DELETEALL;
+			line_list.points.clear();
+			points.points.clear();
+			goal_marker.points.clear();
+			points.action = visualization_msgs::Marker::ADD;
+			points.points.push_back(path_planning.get_node_list_element(0)->point);					
+			points.points.push_back(path_planning.get_node_list_element(0)->point);					
+			points.points.push_back(path_planning.get_node_list_element(0)->point);					
+			for(int i=1;i<path_planning.get_node_list().size()-1;i++){
+				points.points.push_back(path_planning.get_node_list_element(i)->point);
+				if(path_planning.get_node_list_element(i)->cost!=INFINITY){
+					line_list.points.push_back(path_planning.get_node_list_element(i)->point);
+					line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+				}
 			}
-		}
-		goal_marker.points.push_back(goal);
-		marker_pub.publish(points);
-		marker_pub.publish(line_list);
-		marker_pub.publish(goal_marker);
+			goal_marker.points.push_back(goal);
+			marker_pub.publish(points);
+			marker_pub.publish(line_list);
+			marker_pub.publish(goal_marker);
 
-		if (debugging){
-			ROS_INFO("I've exited markers");
+			if (debugging){
+				ROS_INFO("I've exited markers");
+			}
 		}
 
 		path_planning.is_goal_found();
@@ -1095,8 +1110,7 @@ int main(int argc, char **argv)
 					path.points.clear();
 					//path_planning.print_path();
 					//path_planning.print_next_path_point();
-					ROS_INFO("found and printed path");
-					path.action = visualization_msgs::Marker::ADD;
+					//ROS_INFO("found and printed path");
 					for (int i = path_planning.path_length()-2; i > 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
@@ -1111,16 +1125,19 @@ int main(int argc, char **argv)
 					path.points.clear();
 					marker_pub.publish(path);
 				}
-				if (path_planning.get_dist(position,path_planning.get_root_node()->point) < 0.2){
+				ROS_INFO("dist to next point = %lf",path_planning.get_dist(position,path_planning.get_next_path_point()));
+				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
 					new_root=path_planning.get_next_path_node();
-					if (new_root != path_planning.get_root_node()){
+					if (new_root != path_planning.get_root_node() && path_planning.get_cost(new_node) < INFINITY){
 						path_planning.change_root(path_planning.get_next_path_node());
 						path_planning.clear_qs();
 						path_planning.rewire_from_root();
+					} else {
+						path_pub.publish(path_planning.dummy_point);
 					}
 					//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-				}
-				ROS_INFO("path cost = %lf ",path_planning.get_goal_node_cost());	
+				}		
+				//ROS_INFO("path cost = %lf ",path_planning.get_goal_node_cost());	
 		
 		} else {
 			ROS_WARN("finding goal or at goal");

@@ -76,7 +76,7 @@ public:
     void p_control()
     {
         double kps,kpv;
-        kps=1.8;
+        kps=2.5;
         kpv=1.8;
         update_errors();
         steer_velocity=kps*heading_error;
@@ -84,10 +84,10 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (velocity < 0.2){
+        /*if (velocity < 0.2){
             velocity=0.2;
-        }
-        if (heading_error > PI/4 || heading_error <-PI/4){
+        }*/
+        if (heading_error > PI/8 || heading_error <-PI/8){
             velocity=0.0;
         }
         /*if (steer_velocity < 0.5){
