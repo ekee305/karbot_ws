@@ -93,13 +93,15 @@ void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg 
 }
 
 void mapUpdateCallback(const map_msgs::OccupancyGridUpdate &msg){
-	int k=0;
-	for(int j = 0; j < msg.height; j++){
-		for(int i=0; i < msg.width; i++){
-			map[(msg.y+j)*map_width+(msg.x+i)]=msg.data[k++];
+	if(map_loaded_flag){
+		int k=0;
+		for(int j = 0; j < msg.height; j++){
+			for(int i=0; i < msg.width; i++){
+				map[(msg.y+j)*map_width+(msg.x+i)]=msg.data[k++];
+			}
 		}
+		ROS_INFO("Map updated");
 	}
-	ROS_INFO("Map updated");
 }
 
 
@@ -336,6 +338,11 @@ public:
 				}
 			}
 		}
+		if(test_node!=root){
+			if (check_line_obstacle(test_node->parent->point,test_node->point)){
+				test_node->cost=INFINITY;
+			}
+		}
 		if (debugging){
 			ROS_INFO("I'm leaving rewire neighbours");
 		}
@@ -568,7 +575,10 @@ public:
 	}
 
 	bool check_line_obstacle (geometry_msgs::Point point_1, geometry_msgs::Point point_2) {
-    geometry_msgs::Point test_point_1,test_point_2;
+	/*if (debugging){
+		ROS_INFO("I've entered check line obstacle");
+	}*/
+	geometry_msgs::Point test_point_1,test_point_2;
     path_planning::grid_cell grid_1,grid_2,grid_1_test,grid_2_test;
 		int difference_x,difference_y;
 		int map_test;
@@ -679,6 +689,9 @@ public:
       }
 
     }
+	/*if (debugging){
+		ROS_INFO("I've exited check line obstacle");
+	}*/
     return(false);
 }
 
@@ -1054,8 +1067,10 @@ int main(int argc, char **argv)
 		points.points.push_back(path_planning.get_node_list_element(0)->point);					
 		for(int i=1;i<path_planning.get_node_list().size()-1;i++){
 			points.points.push_back(path_planning.get_node_list_element(i)->point);
-			line_list.points.push_back(path_planning.get_node_list_element(i)->point);
-			line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+			if(path_planning.get_node_list_element(i)->cost!=INFINITY){
+				line_list.points.push_back(path_planning.get_node_list_element(i)->point);
+				line_list.points.push_back(path_planning.get_node_list_element(i)->parent->point);
+			}
 		}
 		goal_marker.points.push_back(goal);
 		marker_pub.publish(points);
