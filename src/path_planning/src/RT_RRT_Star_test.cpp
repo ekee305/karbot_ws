@@ -538,7 +538,7 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered find path");
 		}	
-		double temp_cost;
+		path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);
 		for (int i=0;i<goal_list.size();i++){
 			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
@@ -546,7 +546,6 @@ public:
 		}
 		//temp_cost=new_goal_node->cost + get_dist(new_goal_node->point,goal);
 		if (path_cost > (goal_node->cost + get_dist(goal_node->point,goal))){
-			//goal_node=new_goal_node;
 			path_cost=goal_node->cost + get_dist(goal_node->point,goal);
 			geometry_msgs::Point temp_point;
 			path.clear();
@@ -564,7 +563,7 @@ public:
 				path.push_back(temp_point);
 				path_nodes.push_back(node_ptr);
 			}
-		}
+		} 
 		if (debugging){
 			ROS_INFO("I've entered find path");
 		}	
@@ -826,7 +825,7 @@ public:
 	}
 
 	void rewire_random_nodes(){
-		for(int i=0;i<5;i++){
+		for(int i=0;i<25;i++){
 		if(qr.empty()){
 			break;
 		}
@@ -836,7 +835,7 @@ public:
 	}
 	
 	void rewire_from_root(){
-		for(int i = 0;i<10;i++){
+		for(int i = 0;i<50;i++){
 			if(qs.empty()){
 				qs.push_back(root);
 			}
@@ -1062,6 +1061,7 @@ int main(int argc, char **argv)
 					path_planning.add_to_random_queue(lowest_cost_neighbour);
 				}
 			}
+			
 			path_planning.rewire_random_nodes(); 
 			path_planning.rewire_from_root();
 
@@ -1128,7 +1128,8 @@ int main(int argc, char **argv)
 				ROS_INFO("dist to next point = %lf",path_planning.get_dist(position,path_planning.get_next_path_point()));
 				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
 					new_root=path_planning.get_next_path_node();
-					if (new_root != path_planning.get_root_node() && path_planning.get_cost(new_node) < INFINITY){
+					ROS_WARN("new cost = %lf",path_planning.get_cost(new_root));
+					if (new_root != path_planning.get_root_node() /*&& path_planning.get_cost(new_root) != INFINITY*/){
 						path_planning.change_root(path_planning.get_next_path_node());
 						path_planning.clear_qs();
 						path_planning.rewire_from_root();

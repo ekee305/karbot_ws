@@ -16,7 +16,7 @@
   <include file="$(find karbot_navigation)/launch/amcl_test.launch"/>	
   
   <!-- path_planning -->
-  <!--node pkg="path_planning" name="path_planning" type="RT_RRT_Star_test" /-->	
+  <node pkg="path_planning" name="path_planning" type="RT_RRT_Star_test" />	
 
   <!-- Run the global costmap node -->
   <node name="global_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
