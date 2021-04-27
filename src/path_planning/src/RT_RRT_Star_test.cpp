@@ -60,7 +60,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=false;
+bool display=true;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -304,9 +304,9 @@ public:
 		for (int i = 0;i<neighbours.size();i++){
 			x_diff=new_point.x-neighbours[i]->point.x;
 			y_diff=new_point.y-neighbours[i]->point.y;
-			if (abs(x_diff) <= node_dist && abs(y_diff)<=node_dist){
+			if (abs(x_diff) <= neighbour_radius && abs(y_diff)<=neighbour_radius){
 				cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
-				if(cost_from_neighbour <= node_dist && !check_line_obstacle(new_point,neighbours[i]->point)){
+				if(cost_from_neighbour <= neighbour_radius && !check_line_obstacle(new_point,neighbours[i]->point)){
 					total_cost=get_cost(neighbours[i])+cost_from_neighbour;
 					if (total_cost < lowest_cost){
 						closest_neighbour=neighbours[i];
@@ -329,9 +329,10 @@ public:
 			test_node->cost=INFINITY;
 			return;
 		}
+		update_neighbour_radius();
 		find_neighbours(test_node->point);
 		for (int i = 0;i<neighbours.size();i++){
-			if(get_dist(neighbours[i]->point,test_node->point) < node_dist){	
+			if(get_dist(neighbours[i]->point,test_node->point) < neighbour_radius){	
 				total_cost=calculate_cost(test_node,neighbours[i]);
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
@@ -369,8 +370,9 @@ public:
 		}
 		double total_cost;
 		find_neighbours(test_node->point);
+		update_neighbour_radius();
 		for (int i = 0;i<neighbours.size();i++){
-			if(get_dist(neighbours[i]->point,test_node->point) < node_dist){	
+			if(get_dist(neighbours[i]->point,test_node->point) < neighbour_radius){	
 				total_cost=calculate_cost(test_node,neighbours[i]);
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
@@ -538,23 +540,24 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered find path");
 		}	
-		path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);
+		path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);	
 		for (int i=0;i<goal_list.size();i++){
 			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
 			}
 		}
-		//temp_cost=new_goal_node->cost + get_dist(new_goal_node->point,goal);
+		
 		if (path_cost > (goal_node->cost + get_dist(goal_node->point,goal))){
 			path_cost=goal_node->cost + get_dist(goal_node->point,goal);
 			geometry_msgs::Point temp_point;
 			path.clear();
 			path_nodes.clear();
-			node* node_ptr= goal_node;
+			node* node_ptr = goal_node;
 			temp_point.x=node_ptr->point.x;
 			temp_point.y=node_ptr->point.y;
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
+			ROS_INFO("i get here 6");
 			while(node_ptr->parent != NULL) 
 			{
 				node_ptr=get_parent(node_ptr);
@@ -565,7 +568,7 @@ public:
 			}
 		} 
 		if (debugging){
-			ROS_INFO("I've entered find path");
+			ROS_INFO("I've exited find path");
 		}	
 		return(path);
 
@@ -745,7 +748,7 @@ public:
 
 	bool node_dist_check(geometry_msgs::Point test_point, node* closest) {
 		double dist=get_dist(closest->point,test_point);
-		if (dist < node_dist){
+		if (dist > node_dist){
 			return(true);
 		} else {
 			return(false);
@@ -791,12 +794,18 @@ public:
 	}
 
 	geometry_msgs::Point get_next_path_point(){
-		return(path[path.size()-2]);
+		geometry_msgs::Point temp_point;
+		if(path.size()!=0){
+			temp_point=path[path.size()-2];
+		} else {
+			temp_point=dummy_point;
+		}
+		return(temp_point);
 	}
 
 	node* get_next_path_node(){
 		node* temp_node;
-		if 	(path_nodes.size()==1){
+		if (path_nodes.size()==1){
 			temp_node=path_nodes[0];
 		} else {
 			temp_node=path_nodes[path_nodes.size()-2];
@@ -944,7 +953,7 @@ int main(int argc, char **argv)
   
   //initialize RRT object and variables
 	static const double child_distance=0.75;
-	static const int density_of_nodes=4;
+	static const int density_of_nodes=50;
 	static const double x_start=position.x; 
 	static const double y_start=position.y;  
 	//static const double x_start=25; 
@@ -1102,10 +1111,10 @@ int main(int argc, char **argv)
 
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
-
 				temp_path.clear();
 				temp_path=path_planning.find_path();
-				if(temp_path != path_to_goal && temp_path.size() !=1){
+				if(temp_path != path_to_goal && temp_path.size() > 1){
+					
 					path_to_goal=temp_path;
 					path.points.clear();
 					//path_planning.print_path();
@@ -1120,28 +1129,33 @@ int main(int argc, char **argv)
 						path_pub.publish(path_planning.get_next_path_point());
 					} else {
 						path_pub.publish(path_planning.dummy_point);
+						path_planning.rewire_from_root();
 					}
 				} else if (temp_path.size()==1) {
 					path.points.clear();
 					marker_pub.publish(path);
 				}
-				ROS_INFO("dist to next point = %lf",path_planning.get_dist(position,path_planning.get_next_path_point()));
+				//ROS_INFO("dist to next point = %lf",path_planning.get_dist(position,path_planning.get_next_path_point()));
+				//ROS_INFO("i get here 1");
 				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
+					//ROS_INFO("i get here 2");
 					new_root=path_planning.get_next_path_node();
-					ROS_WARN("new cost = %lf",path_planning.get_cost(new_root));
-					if (new_root != path_planning.get_root_node() /*&& path_planning.get_cost(new_root) != INFINITY*/){
+					//ROS_WARN("new cost = %lf",path_planning.get_cost(new_root));
+					if (new_root != path_planning.get_root_node() && path_planning.get_cost(new_root) != INFINITY){
 						path_planning.change_root(path_planning.get_next_path_node());
 						path_planning.clear_qs();
 						path_planning.rewire_from_root();
 					} else {
+						//ROS_INFO("i get here 3");
 						path_pub.publish(path_planning.dummy_point);
 					}
+					//ROS_INFO("i get here 3");
 					//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 				}		
 				//ROS_INFO("path cost = %lf ",path_planning.get_goal_node_cost());	
 		
 		} else {
-			ROS_WARN("finding goal or at goal");
+			//ROS_WARN("finding goal or at goal");
 			path.points.clear();
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
