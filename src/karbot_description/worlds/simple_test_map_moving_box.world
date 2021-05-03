@@ -1122,5 +1122,39 @@
         <kinematic>0</kinematic>
       </link>
     </model>
+    <actor name="animated_box">
+        <link name="box_link">
+          <visual name="visual">
+            <geometry>
+              <box>
+                <size>.2 .2 0.5</size>
+              </box>
+            </geometry>
+            <collision>
+              <box>
+                <size>.2 .2 0.5</size>
+              </box>
+            </collision>
+          </visual>
+        </link>
+        <script>
+          <loop>true</loop>
+          <auto_start>true</auto_start>
+          <trajectory id="0" type="square">
+             <waypoint>
+                <time>0.0</time>
+                <pose>3 4 0.26 0 0 0</pose>
+             </waypoint>
+             <waypoint>
+                <time>6.0</time>
+                <pose>6 7 0.26 0 0 0</pose>
+             </waypoint>
+             <waypoint>
+                <time>12.0</time>
+                <pose>3 4 0.26 0 0 0</pose>
+             </waypoint>
+          </trajectory>
+        </script>
+      </actor>
   </world>
 </sdf>

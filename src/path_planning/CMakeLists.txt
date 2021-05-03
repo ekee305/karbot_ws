@@ -152,6 +152,7 @@ add_executable(RT_RRT_Star src/RT_RRT_Star.cpp)
 add_executable(RT_RRT_Star_test src/RT_RRT_Star_test.cpp)
 
 
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -172,6 +173,7 @@ add_dependencies(RRT_Star_efficiency_improvements ${${PROJECT_NAME}_EXPORTED_TAR
 add_dependencies(RRT_Star_efficiency_improvements_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(RT_RRT_Star ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(RT_RRT_Star_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 
 
