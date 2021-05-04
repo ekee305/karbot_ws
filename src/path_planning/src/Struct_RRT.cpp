@@ -10,6 +10,18 @@
 #include <nav_msgs/GetMap.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
+#include <path_planning/grid_cell.h>
+#include <path_planning/path_to_goal.h>
+#include <random>
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PoseStamped.h"
+#include <gazebo_msgs/GetModelState.h>
+#include <time.h>
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include <tf/tf.h>
+#include <chrono>
+#include <queue>
+#include "map_msgs/OccupancyGridUpdate.h" 
 
 
 #define PI 3.14159265
@@ -19,6 +31,8 @@
 //Global variables
 std::vector<int> map;
 bool map_loaded_flag=1;
+std::random_device rd;
+std::default_random_engine re(rd());
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg)
@@ -143,10 +157,10 @@ public:
 		goal.y=y;
 	}
 	
-	geometry_msgs::Point get_rand_point(){	
+	geometry_msgs::Point get_rand_point(std::uniform_real_distribution<double> unif_x, std::uniform_real_distribution<double> unif_y){	
 		geometry_msgs::Point point;
-		point.x=static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10.0));
-		point.y=static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10.0));
+		point.x=unif_x(re);
+		point.y=unif_y(re);
 		//ROS_INFO(" rand point = (%lf, %lf)",point.x, point.y);
 		return (point);
 	}
@@ -270,13 +284,20 @@ int main(int argc, char **argv)
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Rate r(rate);
+
+	const double upper_x=30;  
+	const double lower_x=20; 
+	const double upper_y=30;
+	const double lower_y=20;   
+	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
+	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
   
   //initialize RRT object and variables
 	static const double child_distance=0.1;
-	static const double x_start=5;
-	static const double y_start=5; 
-	static const double x_goal=9.5;
-	static const double y_goal=9.5;
+	static const double x_start=25;
+	static const double y_start=25; 
+	static const double x_goal=29.5;
+	static const double y_goal=29.5;
 	static const int resolution=1; 
 	static const double radius_goal=0.25;
 	RRT path_planning(child_distance,x_start,y_start,resolution,x_goal,y_goal,radius_goal);  //would intialize path planner to have root at robot base
@@ -350,8 +371,8 @@ int main(int argc, char **argv)
 
 		//ROS_INFO("New Point");
 		
-		if (!path_planning.is_goal_found()){
-			rand_point=path_planning.get_rand_point();
+		if (!path_planning.is_goal_found()) {
+			rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			index_of_closest=path_planning.find_closest(rand_point); // returns all_nodes postion of closest
 			next_point=path_planning.new_point(path_planning.get_all_nodes_value(index_of_closest),rand_point); // find point that could be added to tree
 			array_grid=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
@@ -369,7 +390,7 @@ int main(int argc, char **argv)
 				//ROS_INFO("Point placement complete");
 				//ROS_INFO(" ");
 			} 
-		} else {
+		}else {
 			path_planning.find_path();
 			path_planning.print_path();
 			ROS_INFO("found and printed path");
