@@ -163,13 +163,6 @@ public:
 		return(next_point);
 	}
 
-//not required in move to tree structure
-/*	void push_nodes(geometry_msgs::Point parent, geometry_msgs::Point child){
-		children.push_back(child);
-		parents.push_back(parent);
-		all_nodes.push_back(child);		
-		node_num++; //used for printing parent and child node values for particular iteration, use node_num for referenceing all nodes and nod_num-1 for children or parent
-	}*/ 
 
 
 	int find_closest(geometry_msgs::Point random_point){
