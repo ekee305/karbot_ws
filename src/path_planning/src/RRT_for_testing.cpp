@@ -31,6 +31,7 @@
 #include <chrono>
 #include <queue>
 #include "map_msgs/OccupancyGridUpdate.h" 
+#include <memory>
 
 
 
@@ -150,11 +151,10 @@ public:
 	RRT(double d, double x_start, double y_start, double r,double g_r, double goal_r,int den, double neighbour_r, double rs) : distance (d), map_resolution(r),goal_radius(goal_r), density(den), neighbour_radius(neighbour_r),grid_resolution(g_r),node_dist(rs) {
 		root_point.x=x_start;
 		root_point.y=y_start;		
-		srand((unsigned int)time(NULL));
 		I=0;
 		create_root();
 		goal_found=false;
-		path_cost=10000;
+		path_cost=INFINITY;
 		k=0;
 		dummy_point.x=-1000;
 		dummy_point.y=-1000;
@@ -702,8 +702,27 @@ public:
 	void clear_path_variables() {
 		path.clear();
 		path_nodes.clear();
-		path_cost=10000;
+		path_cost=INFINITY;
 	}
+
+    void reset_tree(){
+        root=NULL;
+        goal_node=NULL;
+        neighbours.clear();
+        goal_list.clear();
+        for(int i = 20; i<=31; i++){
+            for(int j = 20;j<=31; j++){
+                spatial_grid[i][j].clear();
+            }
+        }
+        clear_path_variables();
+        node_list.clear();
+        root_point=position;
+        create_root();
+        goal_found=false;
+        goal.x=-1000;
+        goal.y=-1000;
+    }
 
 };
 
@@ -797,9 +816,6 @@ int main(int argc, char **argv)
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
-	node* lowest_cost_neighbour;
-	node* new_node;
-	node* new_root;
 	int map_array_value=0;
 	std::vector<geometry_msgs::Point> temp_path,path_to_goal;
 
@@ -869,12 +885,7 @@ int main(int argc, char **argv)
 	while(ros::ok()){
 		ros::spinOnce();
 		//find rand point
-		if(goal_received){
-			path.points.clear();
-			path_planning.clear_path_variables();
-			marker_pub.publish(path);
-			goal_received=false;
-		}
+
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();
 		Elapsed = end_time - start_time;
@@ -947,9 +958,17 @@ int main(int argc, char **argv)
                         i--;
                     }
                 }
-                while(1){
-                   path_pub.publish(path_planning.dummy_point); 
-                }
+                path_pub.publish(path_planning.dummy_point);
+                path.points.clear();
+                line_list.points.clear();
+			    points.points.clear();
+			    goal_marker.points.clear();
+			    path_planning.clear_path_variables();
+			    marker_pub.publish(path);
+                marker_pub.publish(points);
+			    marker_pub.publish(line_list);
+			    marker_pub.publish(goal_marker);
+                path_planning.reset_tree();
 		}
 		ros::spinOnce();
 		r.sleep();
