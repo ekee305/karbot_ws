@@ -242,9 +242,6 @@ public:
 		return(goal);
 	}
 	
-	int get_I () {
-		return(I);
-	}
 
 	bool get_goal_found(){
 		return(goal_found);
