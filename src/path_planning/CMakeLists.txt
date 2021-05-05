@@ -147,6 +147,12 @@ add_executable(RRT_Star src/RRT_Star.cpp)
 add_executable(Line_obstacle_test src/Line_obstacle_test.cpp)
 add_executable(RRT_Star_with_rewiring src/RRT_Star_with_rewiring.cpp)
 add_executable(RRT_Star_efficiency_improvements src/RRT_Star_efficiency_improvements.cpp)
+add_executable(RRT_Star_efficiency_improvements_test src/RRT_Star_efficiency_improvements_test.cpp)
+add_executable(RT_RRT_Star src/RT_RRT_Star.cpp)
+add_executable(RT_RRT_Star_test src/RT_RRT_Star_test.cpp)
+add_executable(RRT_for_testing src/RRT_for_testing.cpp)
+add_executable(RRT_Star_for_testing src/RRT_Star_for_testing.cpp)
+
 
 
 ## Rename C++ executable without prefix
@@ -166,6 +172,14 @@ add_dependencies(RRT_Star ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_
 add_dependencies(Line_obstacle_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(Struct_RRT ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(RRT_Star_efficiency_improvements ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RRT_Star_efficiency_improvements_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RT_RRT_Star ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RT_RRT_Star_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RRT_for_testing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RRT_Star_for_testing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
+
 
 
 
@@ -183,6 +197,11 @@ target_link_libraries(Line_obstacle_test ${catkin_LIBRARIES})
 target_link_libraries(Struct_RRT ${catkin_LIBRARIES})
 target_link_libraries(RRT_Star_efficiency_improvements ${catkin_LIBRARIES})
 target_link_libraries(RRT_Star_with_rewiring ${catkin_LIBRARIES})
+target_link_libraries(RRT_Star_efficiency_improvements_test ${catkin_LIBRARIES})
+target_link_libraries(RT_RRT_Star ${catkin_LIBRARIES})
+target_link_libraries(RT_RRT_Star_test ${catkin_LIBRARIES})
+target_link_libraries(RRT_for_testing ${catkin_LIBRARIES})
+target_link_libraries(RRT_Star_for_testing ${catkin_LIBRARIES})
 
 
 #############

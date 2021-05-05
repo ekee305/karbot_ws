@@ -20,16 +20,7 @@
 std::vector<int> map;
 bool map_loaded_flag=1;
 
-/*struct path_point {
-  
-  path_point(geometry_msgs::Point p) : point(p) {};
-  
-  geometry_msgs::Point point;
-  int id;
-  int parent_point_id;
-  std::vector<Node> children;
-  
-}*/
+
 
 
 

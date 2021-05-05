@@ -1,11 +1,11 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find map_provider)/maps/hospital_floorplan.yaml"/>
+  <arg name="map_file" default="$(find map_provider)/maps/simple_test_world.yaml"/>
 
 <arg name="open_rviz" default="true"/>
 
 <!-- Karbot spawn -->
-  <include file="$(find karbot_description)/launch/karbot.launch"/>
+  <include file="$(find karbot_description)/launch/spawn.launch"/>
 
   <!-- Map server -->
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
@@ -13,10 +13,10 @@
 
 
   <!-- AMCL -->
-  <include file="$(find karbot_navigation)/launch/amcl.launch"/>	
+  <include file="$(find karbot_navigation)/launch/amcl_test.launch"/>	
   
   <!-- path_planning -->
-  <node pkg="path_planning" name="path_planning" type="RT_RRT_Star" />	
+  <!--node pkg="path_planning" name="path_planning" type="RT_RRT_Star_test" /-->	
 
   <!-- Run the global costmap node -->
   <node name="global_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
