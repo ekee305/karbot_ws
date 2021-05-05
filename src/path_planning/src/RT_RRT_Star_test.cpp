@@ -57,10 +57,10 @@ std::random_device rd;
 std::default_random_engine re(rd());
 geometry_msgs::Point goal;
 bool goal_received=false;
-bool debugging=false;
+bool debugging=true;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=true;
+bool display=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -76,10 +76,11 @@ void chatterCallback(const nav_msgs::OccupancyGrid &msg)
 
 void goalCallback(const geometry_msgs::PoseStamped &msg) 
 {
-	goal.x=msg.pose.position.x;
-    goal.y=msg.pose.position.y;
-	goal_received=true;
-
+	if(goal.x != msg.pose.position.x && goal.y != msg.pose.position.y){
+		goal.x=msg.pose.position.x;
+    	goal.y=msg.pose.position.y;
+		goal_received=true;
+	} 
 }
 
 void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
@@ -317,6 +318,7 @@ public:
 		double total_cost;
 		if (check_grid_for_obs(find_grid_cell(test_node->point))){
 			test_node->cost=INFINITY;
+			ROS_INFO("I've exited rewire root neighbours");
 			return;
 		}
 		update_neighbour_radius();
@@ -334,11 +336,11 @@ public:
 				}
 			}
 		}
-		//ROS_INFO("i got here 1");
+		ROS_INFO("i am here 1");
 		if(test_node!=root){
-			//ROS_INFO("i got here 2");
+			ROS_INFO("i am here 2");
 			if (check_line_obstacle(test_node->parent->point,test_node->point)){
-				//ROS_INFO("i got here 3");
+				ROS_INFO("i am here 3");
 				test_node->cost=INFINITY;
 			}
 		}
@@ -498,7 +500,7 @@ public:
 			ROS_INFO("I've entered is goal found");
 		}	
 		if (get_dist(root->point,goal) > goal_radius){
-			clear_goal_variables();
+			goal_list.clear();
 			double x_diff,y_diff,cost_to_goal;
 			find_neighbours(goal);
 			for (int i = 0;i<neighbours.size();i++){
@@ -506,7 +508,6 @@ public:
 				y_diff=goal.y-neighbours[i]->point.y;
 				if (abs(x_diff) <= goal_radius && abs(y_diff) <= goal_radius){
 					cost_to_goal=sqrt(pow(y_diff,2)+pow(x_diff,2));
-					ROS_INFO("cost to goal is (%.3lf)",cost_to_goal);
 					if(cost_to_goal <= goal_radius && !check_line_obstacle(goal,neighbours[i]->point)){
 						goal_found=true;
 						goal_node=neighbours[i];
@@ -527,7 +528,7 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered find path");
 		}	
-		path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);	
+		//path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);	
 		for (int i=0;i<goal_list.size();i++){
 			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
@@ -917,7 +918,7 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
-	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
+	ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
 	ros::Rate r(rate);
 
@@ -951,8 +952,6 @@ int main(int argc, char **argv)
 	const double lower_y=20;   
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
-
-
 
   
   //initialize RRT object and variables
@@ -1043,9 +1042,13 @@ int main(int argc, char **argv)
 
     
 	while(ros::ok()){
+		ROS_INFO("restarted algorithm");
+		ROS_INFO(" ");
+		
 		ros::spinOnce();
 		//find rand point
 		if(goal_received){
+			path_planning.clear_goal_variables();
 			path.points.clear();
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
@@ -1083,11 +1086,12 @@ int main(int argc, char **argv)
 		}
 
 				//marker updates
-		if (debugging){
-			ROS_INFO("I've entered markers");
-		}						
+					
 			
 		if (display){
+			if (debugging){
+				ROS_INFO("I've entered markers");
+			}	
 			points.action = visualization_msgs::Marker::DELETEALL;
 			line_list.points.clear();
 			points.points.clear();
@@ -1115,7 +1119,6 @@ int main(int argc, char **argv)
 
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
-				ROS_INFO("goal is found");
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() > 1){
@@ -1138,11 +1141,20 @@ int main(int argc, char **argv)
 					marker_pub.publish(path);
 				}
 				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
+					ROS_INFO("i get here 1");
 					new_root=path_planning.get_next_path_node();
-					if (new_root != path_planning.get_root_node() && path_planning.get_cost(new_root) != INFINITY){
-						path_planning.change_root(path_planning.get_next_path_node());
-						path_planning.clear_qs();
-						path_planning.rewire_from_root();
+					ROS_INFO("i get here 2");
+					//ROS_INFO("new_root is (%lf,%lf)",new_root->point.x,new_root->point.y);
+					//ROS_INFO("current_root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
+					if (path_planning.get_root_node() != path_planning.get_goal_node()  /*&& path_planning.get_cost(new_root) != INFINITY*/){
+						ROS_INFO("i get here 3");
+						if (path_planning.get_root_node()!= path_planning.get_next_path_node()) {
+							path_planning.change_root(path_planning.get_next_path_node());
+							ROS_INFO("i get here 4");
+							path_planning.clear_qs();
+							ROS_INFO("i get here 5");
+							path_planning.rewire_from_root();
+						}
 					} else {
 						ROS_INFO("published dummy point 2");
 						path_pub.publish(path_planning.dummy_point);
@@ -1154,7 +1166,6 @@ int main(int argc, char **argv)
 			path.points.clear();
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
-			ROS_INFO("published dummy point 3");
 			path_pub.publish(path_planning.dummy_point);
 		}
 		ros::spinOnce();
