@@ -453,7 +453,6 @@ public:
 			temp_point.y=node_ptr->point.y;
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
-			ROS_INFO("i get here 6");
 			while(node_ptr->parent != NULL) 
 			{
 				node_ptr=get_parent(node_ptr);

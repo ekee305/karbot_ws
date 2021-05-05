@@ -124,7 +124,6 @@ private:
 	double map_resolution; // get this from the map data coming from the server.
 	double grid_resolution;
 	int density;
-	int k; //just for testing moving the root
 
 
 	std::vector<geometry_msgs::Point> path;
@@ -154,8 +153,7 @@ public:
 		I=0;
 		create_root();
 		goal_found=false;
-		path_cost=10000;
-		k=0;
+		path_cost=INFINITY;
 		dummy_point.x=-1000;
 		dummy_point.y=-1000;
 	}
@@ -190,7 +188,7 @@ public:
 		return(new_node);
 	}
 
-	double calculate_cost (node* parent_node, node* child_node) //
+	double calculate_cost (node* parent_node, node* child_node) //add check if node is in obstacle
 	{
 		double cost;
 		if (check_line_obstacle(parent_node->point,child_node->point)) {
@@ -202,7 +200,6 @@ public:
 		}
 		return(cost);
 	}
-
 
 	double get_cost(node *temp_node)
 	{
@@ -236,13 +233,10 @@ public:
 		return(root_point);
 	}
 	
-
-
 	geometry_msgs::Point get_goal() {
 		return(goal);
 	}
 	
-
 	bool get_goal_found(){
 		return(goal_found);
 	}
@@ -255,7 +249,6 @@ public:
 		return(get_cost(goal_node));
 	}
 	
-
 	std::vector<node*> get_node_list(){
 		return(node_list);
 	}
@@ -293,7 +286,7 @@ public:
 		}
 		neighbours.clear();
 		double cost_from_neighbour,total_cost;
-		double lowest_cost=1000000;
+		double lowest_cost=INFINITY;
 		double x_diff,y_diff;
 		find_neighbours(new_point);
 		update_neighbour_radius();
@@ -355,8 +348,6 @@ public:
 		return;
 	}
 
-
-
 	void rewire_random_node_neighbours (node* test_node) {
 		if (debugging){
 			ROS_INFO("I've entered rewire random node neighbours");
@@ -396,7 +387,7 @@ public:
 		}
 		int near=0;
 		double temp=0;
-		double mag=1000000;
+		double mag=INFINITY;
 		double x_diff,y_diff;
 		node* nearest_node;
 		//ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
@@ -493,12 +484,10 @@ public:
 		return(grid);
 	}
 
-
 	int convert_grid_cell (path_planning::grid_cell grid) {
 		int map_array_value=grid.y*map_width+grid.x;
 		return(map_array_value);
 	}
-
 
 	int round_to_grid_cell (double coord){
 		return(int(coord/map_resolution));
@@ -517,6 +506,7 @@ public:
 				y_diff=goal.y-neighbours[i]->point.y;
 				if (abs(x_diff) <= goal_radius && abs(y_diff) <= goal_radius){
 					cost_to_goal=sqrt(pow(y_diff,2)+pow(x_diff,2));
+					ROS_INFO("cost to goal is (%.3lf)",cost_to_goal);
 					if(cost_to_goal <= goal_radius && !check_line_obstacle(goal,neighbours[i]->point)){
 						goal_found=true;
 						goal_node=neighbours[i];
@@ -554,7 +544,6 @@ public:
 			temp_point.y=node_ptr->point.y;
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
-			ROS_INFO("i get here 6");
 			while(node_ptr->parent != NULL) 
 			{
 				node_ptr=get_parent(node_ptr);
@@ -827,11 +816,11 @@ public:
 	void clear_path_variables() {
 		path.clear();
 		path_nodes.clear();
-		path_cost=10000;
+		path_cost=INFINITY;
 	}
 
 	void rewire_random_nodes(){
-		for(int i=0;i<25;i++){
+		for(int i=0;i<5;i++){
 		if(qr.empty()){
 			break;
 		}
@@ -841,7 +830,7 @@ public:
 	}
 	
 	void rewire_from_root(){
-		for(int i = 0;i<50;i++){
+		for(int i = 0;i<10;i++){
 			if(qs.empty()){
 				qs.push_back(root);
 			}
@@ -872,6 +861,24 @@ public:
 		}
 		return(is_in_qs);
 	}
+
+	void rewire_neighbours (node* test_node) {
+		if (debugging){
+			ROS_INFO("I've entered rewire neighbours");
+		}
+		double total_cost;
+		for (int i = 0;i<neighbours.size();i++){
+			total_cost=calculate_cost(test_node,neighbours[i]);
+			if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
+				remove_child_from_parent(neighbours[i]);
+				neighbours[i]->parent=test_node;
+				neighbours[i]->cost=total_cost;	
+			}
+		}
+		//ROS_INFO(" ");
+		return;
+	} 
+
 };
 
 class robot_pose{
@@ -1108,15 +1115,12 @@ int main(int argc, char **argv)
 
 		path_planning.is_goal_found();
 		if (path_planning.get_goal_found()){
+				ROS_INFO("goal is found");
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() > 1){
-					
 					path_to_goal=temp_path;
 					path.points.clear();
-					//path_planning.print_path();
-					//path_planning.print_next_path_point();
-					//ROS_INFO("found and printed path");
 					for (int i = path_planning.path_length()-2; i > 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
@@ -1125,6 +1129,7 @@ int main(int argc, char **argv)
 					if(path_planning.get_goal_node_cost()!=INFINITY){
 						path_pub.publish(path_planning.get_next_path_point());
 					} else {
+						ROS_INFO("published dummy point 1");
 						path_pub.publish(path_planning.dummy_point);
 						path_planning.rewire_from_root();
 					}
@@ -1132,30 +1137,24 @@ int main(int argc, char **argv)
 					path.points.clear();
 					marker_pub.publish(path);
 				}
-				//ROS_INFO("dist to next point = %lf",path_planning.get_dist(position,path_planning.get_next_path_point()));
-				//ROS_INFO("i get here 1");
 				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
-					//ROS_INFO("i get here 2");
 					new_root=path_planning.get_next_path_node();
-					//ROS_WARN("new cost = %lf",path_planning.get_cost(new_root));
 					if (new_root != path_planning.get_root_node() && path_planning.get_cost(new_root) != INFINITY){
 						path_planning.change_root(path_planning.get_next_path_node());
 						path_planning.clear_qs();
 						path_planning.rewire_from_root();
 					} else {
-						//ROS_INFO("i get here 3");
+						ROS_INFO("published dummy point 2");
 						path_pub.publish(path_planning.dummy_point);
+						path_planning.rewire_from_root();
 					}
-					//ROS_INFO("i get here 3");
-					//ROS_INFO("root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
-				}		
-				//ROS_INFO("path cost = %lf ",path_planning.get_goal_node_cost());	
-		
+				}			
 		} else {
 			//ROS_WARN("finding goal or at goal");
 			path.points.clear();
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
+			ROS_INFO("published dummy point 3");
 			path_pub.publish(path_planning.dummy_point);
 		}
 		ros::spinOnce();
