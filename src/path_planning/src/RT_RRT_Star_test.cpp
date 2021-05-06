@@ -30,7 +30,8 @@
 #include <tf/tf.h>
 #include <chrono>
 #include <queue>
-#include "map_msgs/OccupancyGridUpdate.h" 
+#include "map_msgs/OccupancyGridUpdate.h"
+#include "std_msgs/Float64.h" 
 
 
 
@@ -913,8 +914,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle g;
 	ros::NodeHandle a;
 	ros::NodeHandle m;
+	ros::NodeHandle t;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
+	ros::Publisher time_pub = t.advertise<std_msgs::Float64>("/time", 10);
+
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
@@ -975,6 +979,7 @@ int main(int argc, char **argv)
 	node* new_root;
 	int map_array_value=0;
 	std::vector<geometry_msgs::Point> temp_path,path_to_goal;
+	bool path_found=false;
 
 	//intialise robot pose class
 	robot_pose robot_postion;
@@ -1034,16 +1039,15 @@ int main(int argc, char **argv)
 	
 
 	//timer setup
-	std::chrono::time_point<std::chrono::system_clock> start_time, end_time;
-	std::chrono::duration<double, std::milli> Elapsed;
+	std::chrono::time_point<std::chrono::system_clock> start_time, end_time,t1,t2;
+	std::chrono::duration<double, std::milli> Elapsed,time;
+	std_msgs::Float64 time_to_find_path;
 
-	time_t timer;
-	int begin = time(&timer);
-
+	
+	t1 = std::chrono::system_clock::now();
     
 	while(ros::ok()){
-		ROS_INFO("restarted algorithm");
-		ROS_INFO(" ");
+
 		
 		ros::spinOnce();
 		//find rand point
@@ -1053,6 +1057,8 @@ int main(int argc, char **argv)
 			path_planning.clear_path_variables();
 			marker_pub.publish(path);
 			goal_received=false;
+			t1 = std::chrono::system_clock::now();
+			path_found=false;
 		}
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();
@@ -1122,6 +1128,13 @@ int main(int argc, char **argv)
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() > 1){
+					if(!path_found){
+						t2 = std::chrono::system_clock::now();
+						time= t2-t1;
+						time_to_find_path.data=time.count();
+						time_pub.publish(time_to_find_path);
+						path_found=true;
+					}
 					path_to_goal=temp_path;
 					path.points.clear();
 					for (int i = path_planning.path_length()-2; i > 0 ;i--){
@@ -1141,18 +1154,13 @@ int main(int argc, char **argv)
 					marker_pub.publish(path);
 				}
 				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.2){
-					ROS_INFO("i get here 1");
 					new_root=path_planning.get_next_path_node();
-					ROS_INFO("i get here 2");
 					//ROS_INFO("new_root is (%lf,%lf)",new_root->point.x,new_root->point.y);
 					//ROS_INFO("current_root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 					if (path_planning.get_root_node() != path_planning.get_goal_node()  /*&& path_planning.get_cost(new_root) != INFINITY*/){
-						ROS_INFO("i get here 3");
 						if (path_planning.get_root_node()!= path_planning.get_next_path_node()) {
 							path_planning.change_root(path_planning.get_next_path_node());
-							ROS_INFO("i get here 4");
 							path_planning.clear_qs();
-							ROS_INFO("i get here 5");
 							path_planning.rewire_from_root();
 						}
 					} else {

@@ -144,6 +144,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/motion_controller_node.cpp)
 add_executable(motion_controller_no_amcl src/motion_controller_no_amcl.cpp)
 add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
+add_executable(path_length_reader src/path_length_reader.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,6 +157,7 @@ add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(motion_controller_no_amcl ${catkin_EXPORTED_TARGETS})
 add_dependencies(motion_controller_with_amcl ${catkin_EXPORTED_TARGETS})
+add_dependencies(path_length_reader ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -163,6 +165,7 @@ add_dependencies(motion_controller_with_amcl ${catkin_EXPORTED_TARGETS})
 # )
 target_link_libraries(motion_controller_no_amcl   ${catkin_LIBRARIES} )
 target_link_libraries(motion_controller_with_amcl   ${catkin_LIBRARIES} )
+target_link_libraries(path_length_reader   ${catkin_LIBRARIES} )
 
 #############
 ## Install ##
