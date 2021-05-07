@@ -32,6 +32,7 @@
 #include <queue>
 #include "map_msgs/OccupancyGridUpdate.h" 
 #include <memory>
+#include "std_msgs/Float64.h" 
 
 
 
@@ -61,7 +62,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=true;
+bool display=false;
 
 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -77,10 +78,11 @@ void chatterCallback(const nav_msgs::OccupancyGrid &msg)
 
 void goalCallback(const geometry_msgs::PoseStamped &msg) 
 {
-	goal.x=msg.pose.position.x;
-    goal.y=msg.pose.position.y;
-	goal_received=true;
-
+	if(goal.x != msg.pose.position.x && goal.y != msg.pose.position.y){
+		goal.x=msg.pose.position.x;
+    	goal.y=msg.pose.position.y;
+		goal_received=true;
+	}
 }
 
 void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
@@ -494,8 +496,8 @@ public:
 	}*/
 	geometry_msgs::Point test_point_1,test_point_2;
     path_planning::grid_cell grid_1,grid_2,grid_1_test,grid_2_test;
-		int difference_x,difference_y;
-		int map_test;
+	int difference_x,difference_y;
+	int map_test;
     double grad, c,x_test,y_test,angle;
     if(point_1.x > point_2.x){
       test_point_1=point_2;
@@ -706,7 +708,7 @@ public:
 
     void reset_tree(){
         root=NULL;
-        goal_node=NULL;
+		goal_node=NULL;
         neighbours.clear();
         goal_list.clear();
         for(int i = 20; i<=31; i++){
@@ -716,7 +718,7 @@ public:
         }
         clear_path_variables();
         node_list.clear();
-        root_point=position;
+		root_point=position;
         create_root();
         goal_found=false;
         goal.x=-1000;
@@ -756,12 +758,15 @@ int main(int argc, char **argv)
 	ros::NodeHandle g;
 	ros::NodeHandle a;
 	ros::NodeHandle m;
+	ros::NodeHandle t;
+	ros::NodeHandle c;
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
-	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+	ros::Publisher time_pub = t.advertise<std_msgs::Float64>("/time", 10);
+	ros::Publisher cost_pub = c.advertise<std_msgs::Float64>("/cost", 10);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
-	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
+	ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
 	ros::Rate r(rate);
 
@@ -780,11 +785,11 @@ int main(int argc, char **argv)
     }
 	ROS_WARN_ONCE("Pose recieved");
 
-	/*while (!goal_received){
+	while (!goal_received){
 		ROS_WARN_ONCE("Please select goal point");
 		ros::spinOnce();
 	}
-	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);*/
+	ROS_INFO("goal recieved: (%lf,%lf)",goal.x,goal.y);
 	goal.x=position.x;
 	goal.y=position.y;
 
@@ -874,35 +879,38 @@ int main(int argc, char **argv)
 	goal_marker.points.push_back(goal);
 	marker_pub.publish(goal_marker);
 	
-	std::chrono::time_point<std::chrono::system_clock> start_time, end_time;
-	std::chrono::duration<double, std::milli> Elapsed;
-    
-    time_t timer;
-	int begin = time(&timer);
-
+	std::chrono::time_point<std::chrono::system_clock> start_time, end_time,t1,t2;
+	std::chrono::duration<double, std::milli> Elapsed,time;
+    std_msgs::Float64 time_to_find_path,cost_of_path;
+ 
+	t1 = std::chrono::system_clock::now();
     
 	while(ros::ok()){
 		ros::spinOnce();
 		//find rand point
-
-		start_time = std::chrono::system_clock::now();
-		end_time = std::chrono::system_clock::now();
-		Elapsed = end_time - start_time;
-		while (Elapsed.count() < 20.0) {
+		while(!goal_received){
+			t1 = std::chrono::system_clock::now();
+			ros::spinOnce();
+		}
+		
+		//start_time = std::chrono::system_clock::now();
+		//end_time = std::chrono::system_clock::now();
+		//Elapsed = end_time - start_time;
+		//while (Elapsed.count() < 20.0) {
             rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
 			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
-			//ROS_INFO("Array value is %d",array_grid);
+			
 
 			//if statement to implement obstacle avoidance, make function in RRT class to do this;
 			if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1) && !path_planning.check_line_obstacle(closest_node->point,next_point) &&  path_planning.check_node_density(next_point)) {
                 path_planning.add_node_to_tree(closest_node,next_point);
 			}
 
-            end_time = std::chrono::system_clock::now();
-			Elapsed = end_time - start_time;
-		}
+            /*end_time = std::chrono::system_clock::now();
+			Elapsed = end_time - start_time;*/
+		//}
 
 				//marker updates
 		if (debugging){
@@ -940,17 +948,24 @@ int main(int argc, char **argv)
 				temp_path.clear();
 				temp_path=path_planning.find_path();
 				if(temp_path != path_to_goal && temp_path.size() > 1){	
+					t2 = std::chrono::system_clock::now();
+					time= t2-t1;
+					time_to_find_path.data=time.count();
+					time_pub.publish(time_to_find_path);
+					cost_of_path.data=path_planning.get_goal_node_cost();
+					cost_pub.publish(cost_of_path);
+
 					path_to_goal=temp_path;
 					path.points.clear();
 					//path_planning.print_path();
 					//ROS_INFO("found and printed path");
-					for (int i = path_planning.path_length()-2; i > 0 ;i--){
+					for (int i = path_planning.path_length()-2; i >= 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
 							marker_pub.publish(path);
 					}
 				}
-                for(int i = path_planning.path_length()-2; i > 0;){
+                for(int i = path_planning.path_length()-2; i >= 0;){
                     path_pub.publish(path_planning.get_path_point(i));
                     ros::spinOnce();
                     if(path_planning.get_dist(position,path_planning.get_path_point(i)) < 0.2){
@@ -968,6 +983,8 @@ int main(int argc, char **argv)
 			    marker_pub.publish(line_list);
 			    marker_pub.publish(goal_marker);
                 path_planning.reset_tree();
+				goal_received=false;
+				t1 = std::chrono::system_clock::now();
 		}
 		ros::spinOnce();
 		r.sleep();

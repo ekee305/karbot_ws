@@ -6,6 +6,8 @@
 //remeber to change grid width stuff as well and area of grid
 // deal with goal outside map
 //server to request map
+//move base first
+
 
 
 #include <ros/ros.h>
@@ -1051,7 +1053,7 @@ int main(int argc, char **argv)
 		
 		ros::spinOnce();
 		//find rand point
-		if(goal_received){
+		while(!goal_received){
 			path_planning.clear_goal_variables();
 			path.points.clear();
 			path_planning.clear_path_variables();
@@ -1059,6 +1061,7 @@ int main(int argc, char **argv)
 			goal_received=false;
 			t1 = std::chrono::system_clock::now();
 			path_found=false;
+			ros::spinOnce;
 		}
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();

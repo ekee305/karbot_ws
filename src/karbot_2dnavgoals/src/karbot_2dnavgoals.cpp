@@ -38,26 +38,20 @@ int main(int argc, char **argv) {
     ros::spinOnce();
   }
   ROS_WARN_ONCE("AMCL received");
+  std::deque<geometry_msgs::PoseStamped> goals;
+  geometry_msgs::PoseStamped temp_goal;
+  double goal_array[]={21,20.5,28.3,24.06,28.4,29,25,25};
+  temp_goal.header.frame_id="map";
+  for (int i = 0; i<8;i=i+2){
+    temp_goal.pose.position.x=goal_array[i];
+    temp_goal.pose.position.y=goal_array[i+1];
+    goals.push_back(temp_goal);
+  }
 
   while (ros::ok()) {
-    std::deque<geometry_msgs::PoseStamped> goals;
-    geometry_msgs::PoseStamped temp_goal;
-    double goal_array[]={21,20.5,28.3,24.06,28.4,29,25,25};
-    temp_goal.header.frame_id="map";
-    for (int i = 0; i<8;i=i+2){
-      temp_goal.pose.position.x=goal_array[i];
-      temp_goal.pose.position.y=goal_array[i+1];
-      goals.push_back(temp_goal);
-    }
-
-     
-
-    
-  //if(get_dist(goals[i].pose.position,position)<0.35)
         goal_pub.publish(goals[index]);
-        ROS_INFO("dist to goal = %lf",get_dist(goals[index].pose.position,position));
         if ((get_dist(goals[index].pose.position,position))<0.5){
-          index=(index % 4)+1;
+          index=((index+1) % 4);
         } 
    
     
