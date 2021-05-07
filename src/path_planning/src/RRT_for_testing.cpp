@@ -453,6 +453,7 @@ public:
 			node* node_ptr = goal_node;
 			temp_point.x=node_ptr->point.x;
 			temp_point.y=node_ptr->point.y;
+			path.push_back(goal);
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
 			while(node_ptr->parent != NULL) 
@@ -893,10 +894,10 @@ int main(int argc, char **argv)
 			ros::spinOnce();
 		}
 		
-		//start_time = std::chrono::system_clock::now();
-		//end_time = std::chrono::system_clock::now();
-		//Elapsed = end_time - start_time;
-		//while (Elapsed.count() < 20.0) {
+		start_time = std::chrono::system_clock::now();
+		end_time = std::chrono::system_clock::now();
+		Elapsed = end_time - start_time;
+		while (Elapsed.count() < 1.0) {
             rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
@@ -908,9 +909,9 @@ int main(int argc, char **argv)
                 path_planning.add_node_to_tree(closest_node,next_point);
 			}
 
-            /*end_time = std::chrono::system_clock::now();
-			Elapsed = end_time - start_time;*/
-		//}
+            end_time = std::chrono::system_clock::now();
+			Elapsed = end_time - start_time;
+		}
 
 				//marker updates
 		if (debugging){

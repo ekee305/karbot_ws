@@ -23,21 +23,16 @@ geometry_msgs::Point goal;
 bool goal_received=false;
 bool goal_changed=false;
 bool time_received=false;
-std_msgs::Float64 time_to_find_path;
+std_msgs::Float64 time_to_find_path,cost_to_goal;
 
 std::vector<geometry_msgs::Point> path_points;
 
 
 
 
-void pathCallback(const geometry_msgs::Point &msg) //might be quicker way of loading map by simply equating to data
+void costCallback(const std_msgs::Float64 &msg) //might be quicker way of loading map by simply equating to data
 {
-	if(msg != next_path_point){
-        next_path_point=msg;
-        if(next_path_point.x != -1000){
-            path_points.push_back(next_path_point);
-        }
-    }
+    cost_to_goal=msg;
 }
 
 void timeCallback(const std_msgs::Float64 &msg) //might be quicker way of loading map by simply equating to data
@@ -53,14 +48,12 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
 		goal.x=msg.pose.position.x;
     	goal.y=msg.pose.position.y;
 		goal_received=true;
-        if(!path_points.empty()){
-            goal_changed=true;
-        }
+        goal_changed=true;
 	} 
 }
 
 
-//double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2);
+
 
 
 
@@ -75,11 +68,13 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     ros::NodeHandle t;
     ros::NodeHandle g;
-    ros::Subscriber path_sub = n.subscribe("/next_point_on_path", 1, pathCallback);
+    ros::Subscriber cost_sub = n.subscribe("/cost", 1, costCallback);
     ros::Subscriber time_sub = t.subscribe("/time", 1, timeCallback);
     ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 
     geometry_msgs::Point old_goal,goal1,goal2,goal3,goal4;
+    int i=0;
+
     goal1.x=21;
     goal1.y=20.5;
     
@@ -100,6 +95,7 @@ int main(int argc, char **argv)
        
     }
     old_goal=goal;
+    goal_changed=false;
 
 
 
@@ -108,62 +104,33 @@ int main(int argc, char **argv)
     std::ofstream myfile;
     ros::Rate loop_rate(100);
     while (ros::ok())
-    {
-
-       
+    {  
        if (goal_changed && old_goal == goal1){
-            myfile.open ("RT_RRT_path_data_goal_1.csv", std::ios_base::app);
-            myfile << "Path way points to (" << old_goal.x << " " << old_goal.y << ").\n";
-            myfile << "x,y,\n";
-            for (int i = 0; i < path_points.size(); i++){
-                myfile << path_points[i].x << "," << path_points[i].y << ",\n";
-            }
-            myfile << "Time," << time_to_find_path.data << ",\n"; 
-            path_points.clear();
+            myfile.open ("RRT_Star_path_data_goal_1.csv", std::ios_base::app);
+            myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         }  else if (goal_changed && old_goal == goal2){
-            myfile.open ("RT_RRT_path_data_goal_2.csv", std::ios_base::app);
-            myfile << "Path way points to (" << old_goal.x << " " << old_goal.y << ").\n";
-            myfile << "x,y,\n";
-            for (int i = 0; i < path_points.size(); i++){
-                myfile << path_points[i].x << "," << path_points[i].y << ",\n";
-            }
-            myfile << "Time," << time_to_find_path.data << ",\n"; 
-            path_points.clear();
+            myfile.open ("RRT_Star_path_data_goal_2.csv", std::ios_base::app);
+            myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         } else if (goal_changed && old_goal == goal3){
-            myfile.open ("RT_RRT_path_data_goal_3.csv", std::ios_base::app);
-            myfile << "Path way points to (" << old_goal.x << " " << old_goal.y << ").\n";
-            myfile << "x,y,\n";
-            for (int i = 0; i < path_points.size(); i++){
-                myfile << path_points[i].x << "," << path_points[i].y << ",\n";
-            }
-            myfile << "Time," << time_to_find_path.data << ",\n"; 
-            path_points.clear();
+            myfile.open ("RRT_Star_path_data_goal_3.csv", std::ios_base::app);
+            myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         } else if (goal_changed && old_goal == goal4){
-            myfile.open ("RT_RRT_path_data_goal_4.csv", std::ios_base::app);
-            myfile << "Path way points to (" << old_goal.x << " " << old_goal.y << ").\n";
-            myfile << "x,y,\n";
-            for (int i = 0; i < path_points.size(); i++){
-                myfile << path_points[i].x << "," << path_points[i].y << ",\n";
-            }
-            myfile << "Time," << time_to_find_path.data << ",\n"; 
-            path_points.clear();
+            myfile.open ("RRT_Star_path_data_goal_4.csv", std::ios_base::app);
+            myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
+            ROS_WARN("run %d",i++);
         }
-        
-
-        
-        
         ros::spinOnce();
     }
 
@@ -172,11 +139,3 @@ int main(int argc, char **argv)
 }
 
 
-double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2){
-    double x_diff;
-    double y_diff;
-    double dist;
-    x_diff=point_1.x-point_2.x;
-    y_diff=point_1.y-point_2.y;
-    return(sqrt(pow(y_diff,2)+pow(x_diff,2)));
-}
