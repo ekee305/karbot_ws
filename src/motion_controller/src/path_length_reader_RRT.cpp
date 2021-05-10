@@ -73,6 +73,8 @@ int main(int argc, char **argv)
     ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 
     geometry_msgs::Point old_goal,goal1,goal2,goal3,goal4;
+    int i=0;
+    
     goal1.x=21;
     goal1.y=20.5;
     
@@ -104,6 +106,7 @@ int main(int argc, char **argv)
     while (ros::ok())
     {  
        if (goal_changed && old_goal == goal1){
+           ROS_WARN("should be writing to file");
             myfile.open ("RRT_path_data_goal_1.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
@@ -127,6 +130,7 @@ int main(int argc, char **argv)
             goal_changed=false;
             old_goal=goal;
             myfile.close();
+            ROS_WARN("run %d",i++);
         }
         ros::spinOnce();
     }

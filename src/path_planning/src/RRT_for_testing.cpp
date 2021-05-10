@@ -897,7 +897,7 @@ int main(int argc, char **argv)
 		start_time = std::chrono::system_clock::now();
 		end_time = std::chrono::system_clock::now();
 		Elapsed = end_time - start_time;
-		while (Elapsed.count() < 1.0) {
+		while (Elapsed.count() < 20.0) {
             rand_point=path_planning.get_rand_point(unif_x,unif_y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree

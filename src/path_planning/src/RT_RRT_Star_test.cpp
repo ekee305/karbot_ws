@@ -60,7 +60,7 @@ std::random_device rd;
 std::default_random_engine re(rd());
 geometry_msgs::Point goal;
 bool goal_received=false;
-bool debugging=true;
+bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
 bool display=false;
@@ -321,34 +321,40 @@ public:
 		double total_cost;
 		if (check_grid_for_obs(find_grid_cell(test_node->point))){
 			test_node->cost=INFINITY;
-			ROS_INFO("I've exited rewire root neighbours");
+			//ROS_INFO("I've exited rewire root neighbours");
 			return;
 		}
 		update_neighbour_radius();
 		find_neighbours(test_node->point);
-		for (int i = 0;i<neighbours.size();i++){
+		//ROS_WARN("I am here 7");
+		for (int i = 0; i < neighbours.size();i++){
 			if(get_dist(neighbours[i]->point,test_node->point) < neighbour_radius){	
+				if(neighbours[i]==root){
+					continue;
+				}
 				total_cost=calculate_cost(test_node,neighbours[i]);
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
 					neighbours[i]->parent=test_node;
 					neighbours[i]->cost=total_cost;
+					//ROS_WARN("I am here 5");
 					if(!check_qs(neighbours[i])){
 						add_to_root_queue(neighbours[i]);
+						//ROS_WARN("I am here 6");
 					}
 				}
 			}
 		}
-		ROS_INFO("i am here 1");
+		//ROS_WARN("i am here 1");
 		if(test_node!=root){
-			ROS_INFO("i am here 2");
+			//ROS_WARN("i am here 2");
 			if (check_line_obstacle(test_node->parent->point,test_node->point)){
-				ROS_INFO("i am here 3");
+				//ROS_WARN("i am here 3");
 				test_node->cost=INFINITY;
 			}
 		}
 		if (debugging){
-			ROS_INFO("I'm leaving rewire neighbours");
+			ROS_INFO("I'm leaving rewire root neighbours");
 		}
 		return;
 	}
@@ -366,6 +372,9 @@ public:
 		update_neighbour_radius();
 		for (int i = 0;i<neighbours.size();i++){
 			if(get_dist(neighbours[i]->point,test_node->point) < neighbour_radius){	
+				if(neighbours[i]==root){
+					continue;
+				}
 				total_cost=calculate_cost(test_node,neighbours[i]);
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
@@ -381,7 +390,7 @@ public:
 			}
 		}
 		if (debugging){
-			ROS_INFO("I'm leaving rewire neighbours");
+			ROS_INFO("I'm leaving rewire random neighbours");
 		}
 		return;
 	} 
@@ -1053,7 +1062,7 @@ int main(int argc, char **argv)
 		
 		ros::spinOnce();
 		//find rand point
-		while(!goal_received){
+		if(goal_received){
 			path_planning.clear_goal_variables();
 			path.points.clear();
 			path_planning.clear_path_variables();
@@ -1140,7 +1149,7 @@ int main(int argc, char **argv)
 					}
 					path_to_goal=temp_path;
 					path.points.clear();
-					for (int i = path_planning.path_length()-2; i > 0 ;i--){
+					for (int i = path_planning.path_length()-2; i >= 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
 							marker_pub.publish(path);
