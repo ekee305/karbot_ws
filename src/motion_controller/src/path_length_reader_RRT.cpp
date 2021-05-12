@@ -44,18 +44,13 @@ void timeCallback(const std_msgs::Float64 &msg) //might be quicker way of loadin
 
 void goalCallback(const geometry_msgs::PoseStamped &msg) 
 {
-	if(goal.x != msg.pose.position.x && goal.y != msg.pose.position.y){
+	if(goal.x != msg.pose.position.x || goal.y != msg.pose.position.y){
 		goal.x=msg.pose.position.x;
     	goal.y=msg.pose.position.y;
 		goal_received=true;
         goal_changed=true;
 	} 
 }
-
-
-
-
-
 
 
 
@@ -75,17 +70,17 @@ int main(int argc, char **argv)
     geometry_msgs::Point old_goal,goal1,goal2,goal3,goal4;
     int i=0;
     
-    goal1.x=21;
-    goal1.y=20.5;
+    goal1.x=12;
+    goal1.y=22;
     
-    goal2.x=28.3;
-    goal2.y=24.06;
+    goal2.x=27.3;
+    goal2.y=35.1;
     
-    goal3.x=28.4;
-    goal3.y=29;
+    goal3.x=27.1;
+    goal3.y=21.2;
     
-    goal4.x=25;
-    goal4.y=25;
+    goal4.x=12;
+    goal4.y=15;
 
 
 
@@ -102,30 +97,30 @@ int main(int argc, char **argv)
     //intialise controller class
    //ROS_INFO("inital ref = (%lfm%lf)",path[path_end].x,path[path_end].y);
     std::ofstream myfile;
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {  
        if (goal_changed && old_goal == goal1){
            ROS_WARN("should be writing to file");
-            myfile.open ("RRT_path_data_goal_1.csv", std::ios_base::app);
+            myfile.open ("/home/ethan/Path_planning_data/RRT_path_data_goal_1.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         }  else if (goal_changed && old_goal == goal2){
-            myfile.open ("RRT_path_data_goal_2.csv", std::ios_base::app);
+            myfile.open ("/home/ethan/Path_planning_data/RRT_path_data_goal_2.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         } else if (goal_changed && old_goal == goal3){
-            myfile.open ("RRT_path_data_goal_3.csv", std::ios_base::app);
+            myfile.open ("/home/ethan/Path_planning_data/RRT_path_data_goal_3.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;
             myfile.close();
         } else if (goal_changed && old_goal == goal4){
-            myfile.open ("RRT_path_data_goal_4.csv", std::ios_base::app);
+            myfile.open ("/home/ethan/Path_planning_data/RRT_path_data_goal_4.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";
             goal_changed=false;
             old_goal=goal;

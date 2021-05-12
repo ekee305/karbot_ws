@@ -155,7 +155,7 @@ int main(int argc, char **argv)
     control car(yaw,position.x,position.y,next_path_point.x,next_path_point.y);
     car.p_control();
     
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(10);
     while (ros::ok())
     {
         ROS_INFO("point=(%lf,%lf,%lf)",position.x,position.y,yaw);

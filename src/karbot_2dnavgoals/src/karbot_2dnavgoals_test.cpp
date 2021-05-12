@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle a;
   ros::Publisher goal_pub = n.advertise<geometry_msgs::PoseStamped>("/goal", 1000);
   ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
-  ros::Rate loop_rate(5);
+  ros::Rate loop_rate(10);
   int index=0;
 
   while(!first_pose_loaded){
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   ROS_WARN_ONCE("AMCL received");
   std::deque<geometry_msgs::PoseStamped> goals;
   geometry_msgs::PoseStamped temp_goal;
-  double goal_array[]={12,22,27.3,35.1,27.1,21.2,12,15};
+  double goal_array[]={21,20.5,28.3,24.06,28.4,29,25,25};
   temp_goal.header.frame_id="map";
   for (int i = 0; i<8;i=i+2){
     temp_goal.pose.position.x=goal_array[i];

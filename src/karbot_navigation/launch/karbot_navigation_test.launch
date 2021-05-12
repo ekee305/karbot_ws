@@ -36,6 +36,8 @@
   <!--node pkg="motion_controller" name="path_reader" type="path_length_reader" /-->
 
   <!-- job scheduler -->
-  <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" />	
+  <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals_test" />
+
+	
 
 </launch>

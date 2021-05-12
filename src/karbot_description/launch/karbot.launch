@@ -3,13 +3,13 @@
 
   <param name="robot_description" command="$(find xacro)/xacro.py '$(find karbot_description)/urdf/karbot.xacro'"/>
 <!-- gazebo-->
-  <arg name="x" default="0.0"/>
-  <arg name="y" default="10.0"/>
+  <arg name="x" default="-7.8"/>
+  <arg name="y" default="-27.4"/>
   <arg name="z" default="0.0"/>
   <arg name="use_sim_time" default="true"/>
   <arg name="gui" default="false"/>
  
-<include file="$(find aws_robomaker_hospital_world)/launch/view_hospital.launch"/>
+<include file="$(find aws_robomaker_hospital_world)/launch/hospital.launch"/>
   
   <!--include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find karbat_description)/worlds/mybot.world"/>

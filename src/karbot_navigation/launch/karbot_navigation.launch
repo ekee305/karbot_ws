@@ -16,7 +16,7 @@
   <include file="$(find karbot_navigation)/launch/amcl.launch"/>	
   
   <!-- path_planning -->
-  <node pkg="path_planning" name="path_planning" type="RT_RRT_Star" />	
+  <node pkg="path_planning" name="path_planning" type="RT_RRT_Star_In_Hospital" />	
 
   <!-- Run the global costmap node -->
   <node name="global_costmap_node" pkg="costmap_2d" type="costmap_2d_node"  clear_params="true" >
@@ -31,5 +31,8 @@
 
   <!-- motion_controller -->
   <node pkg="motion_controller" name="motion_controller" type="motion_controller_with_amcl" />
+
+  <!-- job scheduler -->
+  <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" />
 
 </launch>
