@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
   while (ros::ok()) {
         goal_pub.publish(goals[index]);
-        if ((get_dist(goals[index].pose.position,position))<0.5){
+        if ((get_dist(goals[index].pose.position,position))<0.6){
           index=((index+1) % 4);
         } 
    

@@ -6,7 +6,7 @@ transform_tolerance: 0.5
 
 plugins:
     - {name: static_layer, type: "costmap_2d::StaticLayer"}
-    - {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"}
+#    - {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"}
     - {name: inflation_layer,  type: "costmap_2d::InflationLayer"}
 
 
@@ -17,8 +17,8 @@ footprint: [[-0.105, -0.105], [-0.105, 0.105], [0.041, 0.105], [0.041, -0.105]]
 #robot_radius: 0.46
 inflation_radius: 0.40
 cost_scaling_factor: 3
-obstacle_layer:
-  observation_sources: scan
-  scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true, inf_is_valid: true, observation_persistence: 0.0}
+#obstacle_layer:
+#  observation_sources: scan
+#  scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true, inf_is_valid: true, observation_persistence: 0.0}
 
 

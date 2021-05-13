@@ -802,12 +802,31 @@ public:
 		return(temp_point);
 	}
 
+	geometry_msgs::Point get_first_path_point(){
+		geometry_msgs::Point temp_point;
+		if(path.size()!=0){
+			temp_point=path[path.size()-1];
+		} else {
+			temp_point=dummy_point;
+		}
+		return(temp_point);
+	}
+
 	node* get_next_path_node(){
 		node* temp_node;
 		if (path_nodes.size()==1){
 			temp_node=path_nodes[0];
 		} else {
 			temp_node=path_nodes[path_nodes.size()-2];
+		}
+		return(temp_node);
+	}
+	node* get_first_path_node(){
+		node* temp_node;
+		if (path_nodes.size()==1){
+			temp_node=path_nodes[0];
+		} else {
+			temp_node=path_nodes[path_nodes.size()-1];
 		}
 		return(temp_node);
 	}
@@ -833,7 +852,7 @@ public:
 	}
 
 	void rewire_random_nodes(){
-		for(int i=0;i<5;i++){
+		for(int i=0;i<25;i++){
 		if(qr.empty()){
 			break;
 		}
@@ -843,7 +862,7 @@ public:
 	}
 	
 	void rewire_from_root(){
-		for(int i = 0;i<10;i++){
+		for(int i = 0;i<50;i++){
 			if(qs.empty()){
 				qs.push_back(root);
 			}
@@ -1089,7 +1108,6 @@ int main(int argc, char **argv)
 				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
 					new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
 					path_planning.add_to_random_queue(new_node);
-					//path_planning.rewire_neighbours(new_node);
 		
 				} else if (lowest_cost_neighbour != NULL ){
 					path_planning.add_to_random_queue(lowest_cost_neighbour);
@@ -1154,39 +1172,60 @@ int main(int argc, char **argv)
 							path.points.push_back(path_planning.get_path_point(i+1));	
 							marker_pub.publish(path);
 					}
-					if(path_planning.get_goal_node_cost()!=INFINITY){
-						path_pub.publish(path_planning.get_next_path_point());
+					//take out path finding and driving to goal
+					if(path_planning.get_cost(path_planning.get_first_path_node())!=INFINITY){
+						path_pub.publish(path_planning.get_first_path_point());
 					} else {
-						ROS_INFO("published dummy point 1");
-						path_pub.publish(path_planning.dummy_point);
-						path_planning.rewire_from_root();
+						if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
+							path_pub.publish(path_planning.get_root_node()->point);
+						} else {
+							path.points.clear();
+							path_planning.clear_path_variables();
+							marker_pub.publish(path);
+							//ROS_WARN("published dummy point 4");
+							path_pub.publish(path_planning.dummy_point);
+						}
 					}
 				} else if (temp_path.size()==1) {
 					path.points.clear();
 					marker_pub.publish(path);
 				}
-				if (path_planning.get_dist(position,path_planning.get_next_path_point()) < 0.25){
+				if (path_planning.get_dist(position,path_planning.get_first_path_point()) < 0.3){
 					new_root=path_planning.get_next_path_node();
-					//ROS_INFO("new_root is (%lf,%lf)",new_root->point.x,new_root->point.y);
-					//ROS_INFO("current_root is (%lf,%lf)",path_planning.get_root_node()->point.x,path_planning.get_root_node()->point.y);
 					if (path_planning.get_root_node() != path_planning.get_goal_node()  /*&& path_planning.get_cost(new_root) != INFINITY*/){
 						if (path_planning.get_root_node()!= path_planning.get_next_path_node()) {
 							path_planning.change_root(path_planning.get_next_path_node());
 							path_planning.clear_qs();
 							path_planning.rewire_from_root();
+						} else {
+							if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
+								path_pub.publish(path_planning.get_root_node()->point);
+							} else {
+								//ROS_WARN("published dummy point 2");
+								path_pub.publish(path_planning.dummy_point);
+								path_planning.rewire_from_root();
+							}
 						}
 					} else {
-						ROS_INFO("published dummy point 2");
-						path_pub.publish(path_planning.dummy_point);
-						path_planning.rewire_from_root();
+						if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
+							path_pub.publish(path_planning.get_root_node()->point);
+						} else {
+							//ROS_WARN("published dummy point 3");
+							path_pub.publish(path_planning.dummy_point);
+							path_planning.rewire_from_root();
+						}
 					}
 				}			
 		} else {
-			//ROS_WARN("finding goal or at goal");
-			path.points.clear();
-			path_planning.clear_path_variables();
-			marker_pub.publish(path);
-			path_pub.publish(path_planning.dummy_point);
+			if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
+				path_pub.publish(path_planning.get_root_node()->point);
+			} else {
+				path.points.clear();
+				path_planning.clear_path_variables();
+				marker_pub.publish(path);
+				//ROS_WARN("published dummy point 4");
+				path_pub.publish(path_planning.dummy_point);
+			}
 		}
 		ros::spinOnce();
 		r.sleep();
