@@ -998,9 +998,9 @@ int main(int argc, char **argv)
 
 	static const double map_resolution=0.05;
 	static const double grid_resolution=GRID_RESOLUTION;
-	static const double radius_goal=0.3;
-	static const int radius_neighbour = 0.75;
-	static const double dist_node = 0.75;
+	static const double radius_goal=0.35;
+	static const int radius_neighbour = 0.7;
+	static const double dist_node = 0.7;
 	RRT path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
