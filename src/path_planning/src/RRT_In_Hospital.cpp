@@ -958,8 +958,6 @@ int main(int argc, char **argv)
 
 					path_to_goal=temp_path;
 					path.points.clear();
-					//path_planning.print_path();
-					//ROS_INFO("found and printed path");
 					for (int i = path_planning.path_length()-2; i >= 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
