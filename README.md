@@ -12,3 +12,7 @@ Motion controller source "src/motion_controller/src/motion_controller_with_amcl"
 
 AMCL with tuned parameters source: "/src/karbot_navigation/launch/amcl.launch"
 AMCL with default parameters source: "/src/karbot_localization/launch/amcl.launch"
+To launch AMCL with tuned parameters in simulation, ensure line 16 in source "src/karbot_navigation/launch/karbot_navigation.launch" is written as follows:
+"<include file="$(find karbot_navigation)/launch/amcl.launch"/>"
+To launch AMCL with default parameters in simulation, ensure line 16 in source "src/karbot_navigation/launch/karbot_navigation.launch" is written as follows:
+"<include file="$(find karbot_localization)/launch/amcl.launch"/>"
