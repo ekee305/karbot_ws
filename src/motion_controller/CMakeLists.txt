@@ -142,7 +142,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/motion_controller_node.cpp)
-add_executable(motion_controller_no_amcl src/motion_controller_no_amcl.cpp)
+
 add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
 add_executable(path_length_reader_RRT src/path_length_reader_RRT.cpp)
 add_executable(path_length_reader_RT_RRT_Star src/path_length_reader_RT_RRT_Star.cpp)
@@ -157,7 +157,7 @@ add_executable(path_length_reader_RRT_Star src/path_length_reader_RRT_Star.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(motion_controller_no_amcl ${catkin_EXPORTED_TARGETS})
+
 add_dependencies(motion_controller_with_amcl ${catkin_EXPORTED_TARGETS})
 add_dependencies(path_length_reader_RRT ${catkin_EXPORTED_TARGETS})
 add_dependencies(path_length_reader_RT_RRT_Star ${catkin_EXPORTED_TARGETS})
@@ -167,7 +167,7 @@ add_dependencies(path_length_reader_RRT_Star ${catkin_EXPORTED_TARGETS})
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(motion_controller_no_amcl   ${catkin_LIBRARIES} )
+
 target_link_libraries(motion_controller_with_amcl   ${catkin_LIBRARIES} )
 target_link_libraries(path_length_reader_RRT   ${catkin_LIBRARIES} )
 target_link_libraries(path_length_reader_RT_RRT_Star   ${catkin_LIBRARIES} )

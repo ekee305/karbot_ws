@@ -27,19 +27,19 @@ std::vector<geometry_msgs::Point> path_points;
 
 
 
-
-void costCallback(const std_msgs::Float64 &msg) //might be quicker way of loading map by simply equating to data
+//function for when cost is recieved
+void costCallback(const std_msgs::Float64 &msg) 
 {
     cost_to_goal=msg;
 }
-
-void timeCallback(const std_msgs::Float64 &msg) //might be quicker way of loading map by simply equating to data
+//function for when time is recieved
+void timeCallback(const std_msgs::Float64 &msg) 
 {
     ROS_WARN("time callback");
     time_to_find_path=msg;
 }
 
-
+//function for when goal is recieved
 void goalCallback(const geometry_msgs::PoseStamped &msg) 
 {
 	if(goal.x != msg.pose.position.x || goal.y != msg.pose.position.y){
@@ -49,9 +49,6 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
         goal_changed=true;
 	} 
 }
-
-
-
 
 
 
@@ -70,6 +67,7 @@ int main(int argc, char **argv)
     ros::Subscriber time_sub = t.subscribe("/time", 1, timeCallback);
     ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 
+    //variable definitons
     geometry_msgs::Point old_goal,goal1,goal2,goal3,goal4;
     int i=0;
 
@@ -87,7 +85,7 @@ int main(int argc, char **argv)
 
 
 
-
+// wait for goal to be received before proceeding
     while(!goal_received){
        ros::spinOnce();
        
@@ -97,12 +95,11 @@ int main(int argc, char **argv)
 
 
 
-    //intialise controller class
-   //ROS_INFO("inital ref = (%lfm%lf)",path[path_end].x,path[path_end].y);
     std::ofstream myfile;
     ros::Rate loop_rate(100);
     while (ros::ok())
     {  
+        //write cost and time values receieved to the appropriate file based on route.
        if (goal_changed && old_goal == goal1){
             myfile.open ("/home/ethan/Path_planning_data/RRT_Star_path_data_goal_1.csv", std::ios_base::app);
             myfile << cost_to_goal.data << "," << time_to_find_path.data << ",\n";

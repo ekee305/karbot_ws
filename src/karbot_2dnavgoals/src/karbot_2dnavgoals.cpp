@@ -1,3 +1,7 @@
+//Authors: Ethan Kee, Kar Lau
+//Date:17/05/2021
+//Description: Simple program that can publish goal points on the /goal topic in a loop
+
 #include "ros/ros.h"
 #include "geometry_msgs/PoseStamped.h"
 #include <actionlib/client/simple_action_client.h>
@@ -10,6 +14,7 @@ geometry_msgs::Point position;
 double roll,pitch, yaw;
 bool first_pose_loaded=false;
 
+// call back when AMCL postion is recieved
 void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
 {
 	position.x=msg->pose.pose.position.x;
@@ -21,6 +26,7 @@ void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg 
 
 }
 
+//function to get distance
 double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2);
 
 int main(int argc, char **argv) {
@@ -32,7 +38,7 @@ int main(int argc, char **argv) {
   ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
   ros::Rate loop_rate(5);
   int index=0;
-
+//Wait for AMCL node to publish pose before proceeding
   while(!first_pose_loaded){
     ROS_WARN_ONCE("Waiting for AMCL");
     ros::spinOnce();
@@ -47,7 +53,7 @@ int main(int argc, char **argv) {
     temp_goal.pose.position.y=goal_array[i+1];
     goals.push_back(temp_goal);
   }
-
+//Loop to publish goals in order and in a loop
   while (ros::ok()) {
         goal_pub.publish(goals[index]);
         if ((get_dist(goals[index].pose.position,position))<0.6){
@@ -64,7 +70,7 @@ int main(int argc, char **argv) {
 }
   
 
-
+//function to get distance between 2 points
 	double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2){
 		double x_diff;
 		double y_diff;
