@@ -1,7 +1,7 @@
 # karbot_ws
 A work space developed in order to develop and deploy Karbot robot within simulation.
 
-Simulation of full navigation sub-system can be run using command "roslaunch karbot_navigation karbot_navigation.launch"
+Simulation of full navigation sub-system can be run using command "roslaunch karbot_navigation karbot_navigation.launch" after builing workspace using "catkin_make" command
 
 RRT source: "/src/path_planning/src/RRT_In_Hospital"
 RRT* source: "/src/path_planning/src/RRT_Star_In_Hospital"
