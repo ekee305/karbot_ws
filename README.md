@@ -1,6 +1,8 @@
 # karbot_ws
 A work space developed in order to develop and deploy Karbot robot within simulation.
 
+The gmapping sub-system with Karbot simulated within AWS hospital environment can be run using command "roslaunch karbot_navigation karbot_slam.launch" after building workspace using "catkin_make" command as per standard ROS practise
+
 Simulation of full navigation sub-system with Karbot simulated within AWS hospital environment can be run using command "roslaunch karbot_navigation karbot_navigation.launch" after building workspace using "catkin_make" command as per standard ROS practise
 
 RRT source: "/src/path_planning/src/RRT_In_Hospital"
