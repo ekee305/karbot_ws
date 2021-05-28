@@ -57,7 +57,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=true;
+bool display=false;
 
 //callbacks for when data is received through subscribers 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -547,14 +547,13 @@ public:
 		if (debugging){
 			ROS_INFO("I've entered find path");
 		}	
-		//path_cost=get_cost(goal_node)+get_dist(goal_node->point,goal);	
 		for (int i=0;i<goal_list.size();i++){
 			if ((get_cost(goal_node)+get_dist(goal_node->point,goal)) > (get_cost(goal_list[i])+get_dist(goal_node->point,goal))){
 				goal_node=goal_list[i];
 			}
 		}
 		
-		if (path_cost > (goal_node->cost + get_dist(goal_node->point,goal))){
+		//if (goal_node!=old_goal_node){
 			path_cost=goal_node->cost + get_dist(goal_node->point,goal);
 			geometry_msgs::Point temp_point;
 			path.clear();
@@ -572,7 +571,7 @@ public:
 				path.push_back(temp_point);
 				path_nodes.push_back(node_ptr);
 			}
-		} 
+		//} 
 		if (debugging){
 			ROS_INFO("I've exited find path");
 		}	
@@ -1157,19 +1156,7 @@ int main(int argc, char **argv)
 							marker_pub.publish(path);
 					}
 					//publsih nect point for motion controller
-					if(path_planning.get_cost(path_planning.get_first_path_node())!=INFINITY){
-						path_pub.publish(path_planning.get_first_path_point());
-					} else {
-						if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
-							path_pub.publish(path_planning.get_root_node()->point);
-						} else {
-							path.points.clear();
-							path_planning.clear_path_variables();
-							marker_pub.publish(path);
 
-							path_pub.publish(path_planning.dummy_point);
-						}
-					}
 				} else if (temp_path.size()==1) {
 					path.points.clear();
 					marker_pub.publish(path);
@@ -1179,10 +1166,11 @@ int main(int argc, char **argv)
 				if (path_planning.get_dist(position,path_planning.get_first_path_point()) < 0.3){
 					new_root=path_planning.get_next_path_node();
 					if (path_planning.get_root_node() != path_planning.get_goal_node()){
-						if (path_planning.get_root_node()!= path_planning.get_next_path_node()) {
+						if ((path_planning.get_root_node()!= new_root) && (path_planning.get_cost(new_root)!=INFINITY)) {
 							path_planning.change_root(path_planning.get_next_path_node());
 							path_planning.clear_qs();
 							path_planning.rewire_from_root();
+							path_pub.publish(path_planning.get_root_node()->point);
 						} else {
 							if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
 								path_pub.publish(path_planning.get_root_node()->point);

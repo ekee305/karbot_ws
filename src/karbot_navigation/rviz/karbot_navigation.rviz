@@ -69,6 +69,11 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        arrow:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base_footprint:
           Alpha: 1
           Show Axes: false
@@ -88,6 +93,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        front_left_pillar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_right_pillar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         left_wheel:
           Alpha: 1
           Show Axes: false
@@ -98,7 +113,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        rear_left_pillar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rear_right_pillar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         right_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        upper_chassis:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -273,7 +303,10 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Marker
       Namespaces:
-        {}
+        edges: true
+        goal_node: true
+        nodes: true
+        path_nodes: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -299,7 +332,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.7692021131515503
+      Angle: -0.015799134969711304
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -309,11 +342,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 20.15492820739746
+      Scale: 144.70321655273438
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 46.72610855102539
-      Y: 38.7962646484375
+      X: 25.462265014648438
+      Y: 31.79531478881836
     Saved: ~
 Window Geometry:
   Displays:
@@ -331,5 +364,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1920
-  X: 1440
+  X: 1920
   Y: 27
