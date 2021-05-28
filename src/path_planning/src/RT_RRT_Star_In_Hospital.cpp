@@ -57,7 +57,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=false;
+bool display=true;
 
 //callbacks for when data is received through subscribers 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -879,7 +879,7 @@ public:
 	
 		//function to control number of time rewiring of root nodes is performed
 	void rewire_from_root(){
-		for(int i = 0;i<50;i++){
+		for(int i = 0;i<100;i++){
 			if(qs.empty()){
 				qs.push_back(root);
 			}
@@ -1171,13 +1171,10 @@ int main(int argc, char **argv)
 							path_planning.clear_qs();
 							path_planning.rewire_from_root();
 							path_pub.publish(path_planning.get_root_node()->point);
-						} else {
-							if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
-								path_pub.publish(path_planning.get_root_node()->point);
-							} else {
-								path_pub.publish(path_planning.dummy_point);
-								path_planning.rewire_from_root();
-							}
+						} else { 
+							path_pub.publish(path_planning.dummy_point);
+							path_planning.clear_qs();
+							path_planning.rewire_from_root();				
 						}
 					} else {
 						if(path_planning.get_dist(position,path_planning.get_root_node()->point)>0.3){
