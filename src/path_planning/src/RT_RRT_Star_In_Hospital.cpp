@@ -57,7 +57,7 @@ bool goal_received=false;
 bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=false;
+bool display=true;
 
 //callbacks for when data is received through subscribers 
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
@@ -1028,8 +1028,8 @@ int main(int argc, char **argv)
 	points.scale.y = 0.05;
 	goal_marker.scale.x = 0.15;
 	goal_marker.scale.y = 0.15;
-	path_points.scale.x = 0.1;
-	path_points.scale.y = 0.1;
+	path_points.scale.x = 0.05;
+	path_points.scale.y = 0.05;
 
 	line_list.scale.x = 0.01;
 	path.scale.x = 0.1;
