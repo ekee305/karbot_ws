@@ -5,7 +5,7 @@
 <arg name="open_rviz" default="true"/>
 
 <!-- kobuki_setup -->
-  <include file="$(find kobuki_node)/launch/karbot.launch"/>
+  <include file="$(find kobuki_node)/launch/minimal.launch"/>
 
 <!-- lidar_setup -->
   <include file="$(find urg_node)/launch/hokuyo.launch"/>
