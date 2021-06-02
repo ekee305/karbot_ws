@@ -977,7 +977,7 @@ int main(int argc, char **argv)
   
   //initialize RRT object and variables
 	static const double child_distance=0.15;
-	static const int density_of_nodes=1000;
+	static const int density_of_nodes=200;
 	static const double x_start=position.x; 
 	static const double y_start=position.y;   
 	static const double map_resolution=0.05;
@@ -988,7 +988,7 @@ int main(int argc, char **argv)
 	RT_RRT_Star path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	
 	//variable definitons
-	double dist_when_change=0.15;
+	double dist_when_change=0.075;
 	geometry_msgs::Point next_point,parent,rand_point;
 	node* closest_node;
 	node* lowest_cost_neighbour;

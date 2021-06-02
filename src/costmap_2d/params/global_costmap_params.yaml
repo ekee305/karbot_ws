@@ -12,13 +12,13 @@ plugins:
 
 
 obstacle_range: 5.0
-raytrace_range: 5.3
-footprint: [[-0.105, -0.105], [-0.105, 0.105], [0.041, 0.105], [0.041, -0.105]]
-#robot_radius: 0.46
-inflation_radius: 0.15
+raytrace_range: 5.0
+#footprint: [[-0.105, -0.105], [-0.105, 0.105], [0.041, 0.105], [0.041, -0.105]]
+robot_radius: 0.20
+inflation_radius: 0.20
 cost_scaling_factor: 3
 obstacle_layer:
   observation_sources: scan
-  scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true, inf_is_valid: true, observation_persistence: 0.0}
+  scan: {sensor_frame: base_link, data_type: LaserScan, topic: scan, marking: true, clearing: true, inf_is_valid: true, observation_persistence: 0.0, obstacle_min_range: 0.25}
 
 
