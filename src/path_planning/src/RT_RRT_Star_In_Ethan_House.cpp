@@ -38,7 +38,7 @@
 #define GRID_WIDTH 11
 #define GRID_HEIGHT 11
 #define GRID_RESOLUTION 1
-#define SEARCH_AREA 1425
+#define SEARCH_AREA 121
 
 
 
@@ -925,7 +925,7 @@ int main(int argc, char **argv)
 
 
   //ros setup
-	static const int rate=1000;
+	static const int rate=1;
 	ros::init(argc, argv, "path");
 	ros::NodeHandle n;
 	ros::NodeHandle nh;
@@ -940,8 +940,8 @@ int main(int argc, char **argv)
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
 	ros::Publisher time_pub = t.advertise<std_msgs::Float64>("/time", 10);
 
-	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
-	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
+	//ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
+	ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
 	ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
@@ -956,15 +956,15 @@ int main(int argc, char **argv)
 		sleep(1);
 	}
 	ROS_WARN_ONCE("Map recieved");
-    while(!first_pose_loaded){
+    /*while(!first_pose_loaded){
         ROS_WARN_ONCE("Waiting for AMCL pose");
 		ros::spinOnce();
     }
-	ROS_WARN_ONCE("Pose recieved");
+	ROS_WARN_ONCE("Pose recieved");*/
 
 
-	goal.x=position.x;
-	goal.y=position.y;
+	goal.x=6.64;//position.x;
+	goal.y=8.911;//position.y;
 
 	// random number limits to match environment size;
 	const double upper_x=11;  
@@ -976,10 +976,10 @@ int main(int argc, char **argv)
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.25;
-	static const int density_of_nodes=1000;
-	static const double x_start=position.x; 
-	static const double y_start=position.y;   
+	static const double child_distance=0.75;
+	static const int density_of_nodes=20;
+	static const double x_start=9.086;//position.x; 
+	static const double y_start=7.108;//position.y;   
 	static const double map_resolution=0.05;
 	static const double grid_resolution=GRID_RESOLUTION;
 	static const double radius_goal=0.25;
@@ -1080,8 +1080,11 @@ int main(int argc, char **argv)
 		Elapsed = end_time - start_time;
 		while (Elapsed.count() < 20.0){
 			rand_point=path_planning.get_rand_point(unif_x,unif_y);//get rando point
+			ROS_INFO("rand point is (%lf,%lf)",rand_point.x,rand_point.y);
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
+			ROS_INFO("closest node is (%lf,%lf)",closest_node->point.x,closest_node->point.y);
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
+			ROS_INFO("next_point is (%lf,%lf)",next_point.x,next_point.y);
 			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
 
 			//if statement to implement obstacle avoidance
@@ -1091,6 +1094,8 @@ int main(int argc, char **argv)
 				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
 					new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
 					path_planning.add_to_random_queue(new_node); // add new node to random tree
+					ROS_INFO("placed node");
+
 		
 				} else if (lowest_cost_neighbour != NULL ){//if cannot add new node to tree push lower cost neighbor to qr
 					path_planning.add_to_random_queue(lowest_cost_neighbour);
