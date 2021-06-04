@@ -35,10 +35,10 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 16
-#define GRID_HEIGHT 16
+#define GRID_WIDTH 18
+#define GRID_HEIGHT 18
 #define GRID_RESOLUTION 1
-#define SEARCH_AREA 144
+#define SEARCH_AREA 324
 
 
 
@@ -967,24 +967,24 @@ int main(int argc, char **argv)
 	goal.y=position.y; 
 
 	// random number limits to match environment size;
-	const double upper_x=16;  
-	const double lower_x=8; 
-	const double upper_y=16;
-	const double lower_y=5;  
+	const double upper_x=18;  
+	const double lower_x=10; 
+	const double upper_y=15;
+	const double lower_y=11;  
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
   
   //initialize RRT object and variables
-	static const double child_distance=0.15;
-	static const int density_of_nodes=1000;
+	static const double child_distance=0.25;
+	static const int density_of_nodes=500;
 	static const double x_start=position.x; 
 	static const double y_start=position.y;   
 	static const double map_resolution=0.05;
 	static const double grid_resolution=GRID_RESOLUTION;
 	static const double radius_goal=0.1;
-	static const int radius_neighbour = 0.5;
-	static const double dist_node = 0.5;
+	static const int radius_neighbour = 0.3;
+	static const double dist_node = 0.3;
 	RT_RRT_Star path_planning(child_distance,x_start,y_start,map_resolution,grid_resolution,radius_goal,density_of_nodes,radius_neighbour,dist_node);  //would intialize path planner to have root at robot base
 	
 	//variable definitons

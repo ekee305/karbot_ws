@@ -1,6 +1,6 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find map_provider)/maps/ethan_house.yaml"/>
+  <arg name="map_file" default="$(find map_provider)/maps/c15_new.yaml"/>
 
 <arg name="open_rviz" default="true"/>
 

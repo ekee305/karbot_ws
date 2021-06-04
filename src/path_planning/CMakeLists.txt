@@ -145,6 +145,7 @@ add_executable(RRT_Star_In_Hospital src/RRT_Star_In_Hospital.cpp)
 add_executable(RT_RRT_Star_In_Hospital src/RT_RRT_Star_In_Hospital.cpp)
 add_executable(RT_RRT_Star_test_ethan_house src/RT_RRT_Star_test_ethan_house.cpp)
 add_executable(RT_RRT_Star_test src/RT_RRT_Star_test.cpp)
+add_executable(RT_RRT_Star_test_c15 src/RT_RRT_Star_test.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -161,6 +162,7 @@ add_dependencies(RRT_Star_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 add_dependencies(RT_RRT_Star_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(RT_RRT_Star_test_ethan_house ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(RT_RRT_Star_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(RT_RRT_Star_test_c15 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
@@ -178,6 +180,7 @@ target_link_libraries(RRT_Star_In_Hospital ${catkin_LIBRARIES})
 target_link_libraries(RT_RRT_Star_In_Hospital ${catkin_LIBRARIES})
 target_link_libraries(RT_RRT_Star_test_ethan_house ${catkin_LIBRARIES})
 target_link_libraries(RT_RRT_Star_test ${catkin_LIBRARIES})
+target_link_libraries(RT_RRT_Star_test_c15 ${catkin_LIBRARIES})
 
 #############
 ## Install ##

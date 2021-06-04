@@ -16,7 +16,7 @@
 #include <path_planning/path_to_goal.h>
 
 #define MAX_SPEED 0.2
-#define MAX_ANGULAR_SPEED 0.4
+#define MAX_ANGULAR_SPEED 3.1
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
@@ -92,7 +92,11 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
-        if (steer_velocity > MAX_ANGULAR_SPEED)
+        if (steer_velocity > MAX_ANGULAR_SPEED){
+            steer_velocity=MAX_ANGULAR_SPEED;
+        } else if (steer_velocity < -MAX_ANGULAR_SPEED) {
+            steer_velocity=-MAX_ANGULAR_SPEED;
+        }
         // preventing forward movment while heading error large
         if (heading_error > PI/8 || heading_error <-PI/8){
             velocity=0.0;
