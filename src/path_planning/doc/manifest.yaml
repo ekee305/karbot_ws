@@ -1,0 +1,23 @@
+actions: []
+authors: ''
+brief: ''
+bugtracker: ''
+depends:
+- nav_msgs
+- catkin
+- roscpp
+- message_runtime
+- std_msgs
+- geometry_msgs
+- visualization_msgs
+- message_generation
+description: Path_planning package for UoM fourth year project on robotic couriers
+license: BSD
+maintainers: ethan <ethan.kee@student.manchester.ac.uk>
+msgs:
+- path_to_goal
+- grid_cell
+package_type: package
+repo_url: ''
+srvs: []
+url: ''
