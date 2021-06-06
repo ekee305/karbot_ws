@@ -18,7 +18,7 @@ This map should then be place along within the map provided folder at:
 #### Running the system
 To use the system the intial postion of the robot must be set in the the AMCL package used for localisation. This is done by changing the default for the following arguments in the amcl.launch folder to match the robots intial location in the map:
 
-  <arg name="initial_pose_x" default="12"/>
+  '<arg name="initial_pose_x" default="12"/>'
   <arg name="initial_pose_y" default="15"/>
   <arg name="initial_pose_a" default="0"/>
   
