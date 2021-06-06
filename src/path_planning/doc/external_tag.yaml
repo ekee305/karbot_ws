@@ -1,0 +1,3 @@
+ - docs_url: http://www.ros.org/doc/api/path_planning/html
+   location: file:///home/user/karbot_ws/src/path_planning/src/doc/html/index.html
+
