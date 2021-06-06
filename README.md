@@ -7,13 +7,13 @@ In order to map the hospital environemt, the gmapping sub-system is used. This c
 after building workspace using "catkin_make" command as per standard ROS practise\
 
 To move the Karbot within the hosipital environment run command:\
-`$ roslaunch karbot_navigation karbot_teleop.launch`\
+`$ roslaunch karbot_navigation karbot_teleop.launch`
 
 In order to save the map for Karbot to use run command:\
-`$ rosrun map_server map_saver -f hospital_floorplan`\
+`$ rosrun map_server map_saver -f hospital_floorplan`
 
 This map should then be place along within the map provided folder at:\
-`karbot_ws/src/map_provider/maps`\
+`karbot_ws/src/map_provider/maps`
 
 #### Running the system
 To use the system the intial postion of the robot must be set in the the AMCL package used for localisation. This is done by changing the default for the following arguments in the amcl.launch folder to match the robots intial location in the map:\
