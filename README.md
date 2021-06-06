@@ -15,6 +15,10 @@ In order to save the map for Karbot to use run command in another terminal:\
 This map should then be place along within the map provided folder at:\
 `karbot_ws/src/map_provider/maps`
 
+The origin of the saved map must be set to (0,0,0) in the "hospital_floorplan.yaml" file.
+
+Maps must be of a maximum width and height of 100m. Further releases of the package will work to increase this upper limit.
+
 #### Running the system
 To use the system the intial postion of the robot must be set in the the AMCL package used for localisation. This is done by changing the defaults for the following arguments in the amcl.launch folder to match the robots intial location in the map:
 
@@ -43,6 +47,8 @@ Finally to give a goal point for the Karbot to navigate to, press the "2D Nav Go
 #### Note on Job Scheduler
 As the job scheduler is still in development, it has not been included in this version of the release, however it is being worked on and will be released in due course.
 
+###
+
 ## Karbot in Hospital Simulation
 #### Mapping
 In order to map the simulated hospital environemt, the gmapping sub-system is used. This can be run using command:\
@@ -57,6 +63,10 @@ In order to save the map for Karbot to use run command in another terminal:\
 
 This map should then be place along within the map provided folder at:\
 `karbot_ws/src/map_provider/maps`
+
+The origin of the saved map must be set to (0,0,0) in the "hospital_floorplan.yaml" file.
+
+Maps must be of a maximum width and height of 100m. Further releases of the package will work to increase this upper limit.
 
 #### Running the system
 To use the system the intial postion of the robot must be set in the the AMCL package used for localisation. This is done by changing the default for the following arguments in the amcl.launch folder to match the robots intial location in the map:
