@@ -6,10 +6,10 @@ In order to map the hospital environemt, the gmapping sub-system is used. This c
 `$ roslaunch karbot_slam karbot_slam.launch`\
 after building workspace using "catkin_make" command as per standard ROS practise
 
-To move the Karbot within the hospital environment run command:\
+To move the Karbot within the hospital environment run command in another terminal:\
 `$ roslaunch karbot_navigation karbot_teleop.launch`
 
-In order to save the map for Karbot to use run command:\
+In order to save the map for Karbot to use run command in another terminal:\
 `$ rosrun map_server map_saver -f hospital_floorplan`
 
 This map should then be place along within the map provided folder at:\
@@ -49,10 +49,10 @@ In order to map the simulated hospital environemt, the gmapping sub-system is us
 `$ roslaunch karbot_slam karbot_slam_simulation.launch`\
 after building workspace using "catkin_make" command as per standard ROS practise
 
-To move the Karbot within the simulated hospital environment run command:\
+To move the Karbot within the simulated hospital environment run command in another terminal:\
 `$ roslaunch karbot_navigation karbot_teleop.launch`
 
-In order to save the map for Karbot to use run command:\
+In order to save the map for Karbot to use run command in another terminal:\
 `$ rosrun map_server map_saver -f hospital_floorplan`
 
 This map should then be place along within the map provided folder at:\
