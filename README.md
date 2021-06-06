@@ -3,7 +3,7 @@ A work space developed in order to develop and deploy Karbot robot in real-life 
 
 -- KARBOT IN REAL LIFE --
 The gmapping sub-system with Karbot can be run using command
-"$ roslaunch karbot_navigation karbot_slam.launch"
+"$ roslaunch karbot_slam karbot_slam.launch"
 after building workspace using "catkin_make" command as per standard ROS practise
 
 To move the Karbot run command
