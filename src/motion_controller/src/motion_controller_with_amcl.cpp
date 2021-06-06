@@ -1,3 +1,4 @@
+
 //Authors: Ethan Kee
 //Date:17/05/2021
 //Description: Implementation of proportional controller for ROS
@@ -15,7 +16,8 @@
 #include<math.h>
 #include <path_planning/path_to_goal.h>
 
-#define MAX_SPEED 0.3
+#define MAX_SPEED 0.6
+#define MAX_ANGULAR_SPEED 3.1
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
@@ -91,6 +93,11 @@ public:
         if (velocity> MAX_SPEED){
             velocity=MAX_SPEED;
         }
+        if (steer_velocity > MAX_ANGULAR_SPEED){
+            steer_velocity=MAX_ANGULAR_SPEED;
+        } else if (steer_velocity < -MAX_ANGULAR_SPEED) {
+            steer_velocity=-MAX_ANGULAR_SPEED;
+        }
         // preventing forward movment while heading error large
         if (heading_error > PI/8 || heading_error <-PI/8){
             velocity=0.0;
@@ -143,6 +150,7 @@ int main(int argc, char **argv)
     ros::NodeHandle r;
     ros::NodeHandle a;
     geometry_msgs::Twist control_signal;
+    //ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 200);
     ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel", 200);
     ros::Subscriber path_sub = n.subscribe("/next_point_on_path", 1000, pathCallback);
     ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);

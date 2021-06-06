@@ -35,10 +35,10 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 17
-#define GRID_HEIGHT 33
-#define GRID_RESOLUTION 2
-#define SEARCH_AREA 1425
+#define GRID_WIDTH 100
+#define GRID_HEIGHT 100
+#define GRID_RESOLUTION 1
+
 
 
 
@@ -739,13 +739,6 @@ public:
 		spatial_grid[grid.x][grid.y].push_back(temp_node);
 	}
 
-	//function to update neighbour radius based on number of nodes in environment
-	void update_neighbour_radius(){
-		neighbour_radius=sqrt((SEARCH_AREA*double (density))/(PI*double(node_list.size())));
-		if (neighbour_radius<node_dist){
-			neighbour_radius=node_dist;
-		}
-	}
 
 	//function to check if node density less that max density
 	bool check_node_density(){
@@ -968,11 +961,33 @@ int main(int argc, char **argv)
 	goal.y=position.y;
 
 	// random number limits to match environment size;
-	const double upper_x=32;  
-	const double lower_x=7; 
-	const double upper_y=64;
-	const double lower_y=7;  
-	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
+	double upper_x,lower_x,upper_y,lower_y;
+	if(ros::param::has("/upper_x")){
+		ros::param::get  ("/upper_x",upper_x);
+	} else {
+		upper_x=100; 
+	}
+	
+	if(ros::param::has("/lower_x")){
+		ros::param::get  ("/lower_x",lower_x);
+	} else {
+		lower_x=0;  
+	}
+
+	if(ros::param::has("/upper_y")){
+		ros::param::get  ("/upper_y",upper_y);
+	} else {
+		upper_y=100;
+	}
+
+	if(ros::param::has("/lower_y")){
+		ros::param::get  ("/lower_y",lower_y);
+	} else {
+		lower_y=0;
+	}
+	ROS_WARN("upper x = %lf",upper_x);
+ 
+ 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
   

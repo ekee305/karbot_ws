@@ -140,8 +140,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/path_planning_node.cpp)
 
-add_executable(RRT_In_Hospital src/RRT_In_Hospital.cpp)
-add_executable(RRT_Star_In_Hospital src/RRT_Star_In_Hospital.cpp)
+
 add_executable(RT_RRT_Star_In_Hospital src/RT_RRT_Star_In_Hospital.cpp)
 
 
@@ -154,8 +153,7 @@ add_executable(RT_RRT_Star_In_Hospital src/RT_RRT_Star_In_Hospital.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(RRT_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(RRT_Star_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_dependencies(RT_RRT_Star_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
@@ -169,8 +167,7 @@ add_dependencies(RT_RRT_Star_In_Hospital ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 # )
 
 
-target_link_libraries(RRT_In_Hospital ${catkin_LIBRARIES})
-target_link_libraries(RRT_Star_In_Hospital ${catkin_LIBRARIES})
+
 target_link_libraries(RT_RRT_Star_In_Hospital ${catkin_LIBRARIES})
 
 #############

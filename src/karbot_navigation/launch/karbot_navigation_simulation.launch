@@ -1,8 +1,14 @@
 <launch>
   <!-- Arguments -->
   <arg name="map_file" default="$(find map_provider)/maps/hospital_floorplan.yaml"/>
+   <arg name="open_rviz" default="true"/>
 
-<arg name="open_rviz" default="true"/>
+ <!--parameters-->
+   <param name="upper_x" type="double" value="32" />
+   <param name="lower_x" type="double" value="7" />
+   <param name="upper_y" type="double" value="64" />
+   <param name="lower_y" type="double" value="7" />
+
 
 <!-- Karbot spawn -->
   <include file="$(find karbot_description)/launch/karbot.launch"/>
