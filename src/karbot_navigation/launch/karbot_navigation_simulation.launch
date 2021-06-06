@@ -5,10 +5,11 @@
 <arg name="open_rviz" default="true"/>
 
 <!-- Karbot spawn -->
-  <include file="$(find karbot_description)/launch/karbot_rviz.launch"/>
+  <include file="$(find karbot_description)/launch/karbot.launch"/>
 
   <!-- Map server -->
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
 
 
   <!-- AMCL -->
@@ -22,11 +23,16 @@
     <rosparam file="$(find costmap_2d)/params/global_costmap_params.yaml" command="load"  ns="costmap" />
   </node>
 
+ <!-- rviz -->
+  <group if="$(arg open_rviz)"> 
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find karbot_navigation)/rviz/karbot_navigation.rviz"/>
+  </group>
 
   <!-- motion_controller -->
   <node pkg="motion_controller" name="motion_controller" type="motion_controller_with_amcl" />
 
   <!-- job scheduler -->
-  <!--node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" /-->
+  <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" />
 
 </launch>
