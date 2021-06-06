@@ -3,7 +3,7 @@
   <arg name="open_rviz" default="true"/>
 
 <!-- Karbot -->
-  <include file="$(find karbot_description)/launch/spawn.launch"/>
+  <include file="$(find karbot_description)/launch/karbot.launch"/>
 
   <!-- Gmapping -->
   <node pkg="gmapping" type="slam_gmapping" name="karbot_slam_gmapping" output="screen">
