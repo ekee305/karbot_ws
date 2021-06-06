@@ -1,0 +1,21 @@
+<launch>
+
+   <!-- bringup turtlebot -->
+   <include file="$(find turtlebot_bringup)/launch/minimal.launch"/>
+
+  <!-- Launch sensor -->
+   <include file="$(find turtlebot_navigation)/launch/includes/gmapping/hokuyo.launch"/>
+
+  <!-- Gmapping -->
+  <include file="$(find turtlebot_navigation)/launch/includes/gmapping/gmapping.launch.xml"/>
+
+  <!-- Move base -->
+  <!--include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml"/-->
+
+<!-- Rviz -->
+ <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot_rviz_launchers)/rviz/navigation.rviz"/>
+
+<!-- Teleop -->
+  <include file="$(find turtlebot_teleop)/launch/keyboard_teleop.launch"/>
+
+</launch>
