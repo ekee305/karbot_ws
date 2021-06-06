@@ -109,9 +109,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES motion_controller
-#CATKIN_DEPENDS path_planning #actionlib_msgs geometry_msgs nav_msgs roscpp rospy std_msgs visulization_msgs
+ INCLUDE_DIRS include
+ LIBRARIES motion_controller
+ CATKIN_DEPENDS path_planning actionlib_msgs geometry_msgs nav_msgs roscpp rospy std_msgs visualization_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,7 +122,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -144,9 +144,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/motion_controller_node.cpp)
 
 add_executable(motion_controller_with_amcl src/motion_controller_with_amcl.cpp)
-add_executable(path_length_reader_RRT src/path_length_reader_RRT.cpp)
-add_executable(path_length_reader_RT_RRT_Star src/path_length_reader_RT_RRT_Star.cpp)
-add_executable(path_length_reader_RRT_Star src/path_length_reader_RRT_Star.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -159,19 +157,19 @@ add_executable(path_length_reader_RRT_Star src/path_length_reader_RRT_Star.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_dependencies(motion_controller_with_amcl ${catkin_EXPORTED_TARGETS})
-add_dependencies(path_length_reader_RRT ${catkin_EXPORTED_TARGETS})
-add_dependencies(path_length_reader_RT_RRT_Star ${catkin_EXPORTED_TARGETS})
-add_dependencies(path_length_reader_RRT_Star ${catkin_EXPORTED_TARGETS})
+
+
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+add_library(${PROJECT_NAME}
+  src/control.cpp
+)
 
 target_link_libraries(motion_controller_with_amcl   ${catkin_LIBRARIES} )
-target_link_libraries(path_length_reader_RRT   ${catkin_LIBRARIES} )
-target_link_libraries(path_length_reader_RT_RRT_Star   ${catkin_LIBRARIES} )
-target_link_libraries(path_length_reader_RRT_Star   ${catkin_LIBRARIES} )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -195,18 +193,18 @@ target_link_libraries(path_length_reader_RRT_Star   ${catkin_LIBRARIES} )
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
+ install(TARGETS ${PROJECT_NAME}
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
-# )
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
