@@ -985,7 +985,7 @@ int main(int argc, char **argv)
 	} else {
 		lower_y=0;
 	}
-	ROS_WARN("upper x = %lf",upper_x);
+
  
  	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);

@@ -5,6 +5,9 @@
 <!-- Karbot -->
   <include file="$(find karbot_description)/launch/karbot_rviz.launch"/>
 
+<!-- YDLIDAR -->
+  <include file="$(find ydlidar)/launch/lidar.launch"/>
+
   <!-- Gmapping -->
   <node pkg="gmapping" type="slam_gmapping" name="karbot_slam_gmapping" output="screen">
     <param name="delta" value="0.05"/>
