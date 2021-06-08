@@ -1,0 +1,17 @@
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/cmake/jsoncpp/jsoncppConfig.cmake
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/cmake/jsoncpp/jsoncppConfig-debug.cmake
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/cmake/jsoncpp/jsoncppConfigVersion.cmake
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/libjsoncpp.a
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/objects-Debug/jsoncpp_object/json_reader.cpp.o
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/objects-Debug/jsoncpp_object/json_value.cpp.o
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/lib/objects-Debug/jsoncpp_object/json_writer.cpp.o
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/allocator.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/assertions.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/config.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/forwards.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/json.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/json_features.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/reader.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/value.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/version.h
+/home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/debug/include/json/writer.h

@@ -1,0 +1,2 @@
+/home/project/karbot_ws/vcpkg/buildtrees/detect_compiler/x64-linux-rel/CMakeFiles/rebuild_cache.dir
+/home/project/karbot_ws/vcpkg/buildtrees/detect_compiler/x64-linux-rel/CMakeFiles/edit_cache.dir

@@ -1,0 +1,8 @@
+Package: jsoncpp
+Version: 1.9.4
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 38fcba3b0997f1958c393efb6c01a1feaa61dd15
+Description: jsoncpp is an implementation of a JSON reader and writer in C++. JSON (JavaScript Object Notation) is a lightweight data-interchange format that it is easy to parse and redeable for human.
+Type: Port
+Status: install ok half-installed

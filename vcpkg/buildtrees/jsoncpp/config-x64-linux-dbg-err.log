@@ -1,0 +1,8 @@
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    VCPKG_PLATFORM_TOOLSET
+    VCPKG_SET_CHARSET_FLAG
+    _VCPKG_ROOT_DIR
+
+

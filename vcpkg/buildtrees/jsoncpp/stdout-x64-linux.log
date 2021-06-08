@@ -1,0 +1,8 @@
+-- Downloading https://github.com/open-source-parsers/jsoncpp/archive/9059f5cad030ba11d37818847443a53918c327b1.tar.gz -> open-source-parsers-jsoncpp-9059f5cad030ba11d37818847443a53918c327b1.tar.gz...
+-- Extracting source /home/project/karbot_ws/vcpkg/downloads/open-source-parsers-jsoncpp-9059f5cad030ba11d37818847443a53918c327b1.tar.gz
+-- Using source at /home/project/karbot_ws/vcpkg/buildtrees/jsoncpp/src/3918c327b1-034a82149a.clean
+-- Configuring x64-linux-dbg
+-- Configuring x64-linux-rel
+-- Building x64-linux-dbg
+-- Building x64-linux-rel
+-- Installing: /home/project/karbot_ws/vcpkg/packages/jsoncpp_x64-linux/share/jsoncpp/copyright

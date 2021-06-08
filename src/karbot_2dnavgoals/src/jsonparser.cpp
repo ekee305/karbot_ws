@@ -11,21 +11,6 @@
 
 using namespace std;
 
-// for string delimiter
-vector<string> split (string s, string delimiter) {
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    string token;
-    vector<string> res;
-
-    while ((pos_end = s.find (delimiter, pos_start)) != string::npos) {
-        token = s.substr (pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back (token);
-    }
-
-    res.push_back (s.substr (pos_start));
-    return res;
-}
 
 void jobRequestCallback(const std_msgs::String::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
 {
@@ -45,18 +30,6 @@ void jobRequestCallback(const std_msgs::String::ConstPtr& msg ) //might be quick
     const Json::Value resultValue = root["jobRequests"];
     cout << "Result is " << resultValue[1]["priority"]<< "\n";
   }
-
-
-
-   // string str = msg->data.c_str();
-   // string delimiter = "[{";
-   // vector<string> v = split (str, delimiter);
-
-
-   //for (auto i : v) cout << i << endl;
-  // ROS_INFO(" I heard: [%s]", msg->data.c_str());
- //  ROS_INFO(" I heard: [%s]", v.size());
- // cout << "Hello" << endl;
 
 }
 

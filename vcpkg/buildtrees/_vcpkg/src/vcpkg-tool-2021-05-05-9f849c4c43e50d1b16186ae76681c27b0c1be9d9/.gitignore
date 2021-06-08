@@ -1,0 +1,11 @@
+/.vscode
+/build*
+*.swp
+
+/.idea
+/cmake-build-*
+/.vs
+/CMakeSettings.json
+.DS_Store
+# Qt Creator CMake project files
+CMakeLists.txt.user
