@@ -936,8 +936,8 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
-	//ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
-	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
+	ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
+	//ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
 	ros::Rate r(rate);
 
