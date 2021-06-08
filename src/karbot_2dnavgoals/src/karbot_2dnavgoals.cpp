@@ -142,6 +142,11 @@ int main(int argc, char **argv)
   locations["Ward B"] = ward_b;
   locations["Lab"] = lab;
 
+  high_priority_goals.push_back(ward_a);
+  high_priority_goals.push_back(ward_b);
+  low_priority_goals.push_back(ward_b);
+  bool high_priority;
+
   
 
   ros::init(argc, argv, "karbot_2dnavgoals");
@@ -168,54 +173,57 @@ int main(int argc, char **argv)
   }
   ROS_WARN_ONCE("AMCL received");
 
-  while (!first_message_received)
+  /*while (!first_message_received)
   {
     ROS_WARN_ONCE("Waiting for comms with web interface");
     ros::spinOnce();
-  }
+  }*/
 
   while (ros::ok())
   {
    
-
-        if (high_priority_job_ids.size() != 0)
+      if(Goal.pose.position != lab.pose.position){
+        if (high_priority_goals.size() != 0)
         {
           // Set goal point to top of queue
           Goal = high_priority_goals.front();
-          if (current_job_id != high_priority_job_ids.front())
+          high_priority=1;
+          /*if (current_job_id != high_priority_job_ids.front())
           {
             current_job_id = high_priority_job_ids.front();
             // Send job update
             job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
             cout << job_update.data << endl;
             jobresp_pub.publish(job_update);
-          }
+          }*/
         }
-        else if (low_priority_job_ids.size() != 0)
+        else if (low_priority_goals.size() != 0)
         {
           // Set goal point to top of queue
           Goal = low_priority_goals.front();
-          if (current_job_id != low_priority_job_ids.front())
+          high_priority=0;
+          /*if (current_job_id != low_priority_job_ids.front())
           {
             current_job_id = low_priority_job_ids.front();
             // Send job update
             job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
             cout << job_update.data << endl;
             jobresp_pub.publish(job_update);
-          }
+          }*/
         }
         else
         {
           // Set goal point to home
           Goal = home;
         }
+      }
       
 
     // Going to pickup from ward
     if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position != lab.pose.position) && (Goal.pose.position != home.pose.position))
     {
       // check if already completed
-      auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
+      /*auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
       if (it_completed != completed_job_ids.end())
       {
         // If job already completed
@@ -254,16 +262,40 @@ int main(int argc, char **argv)
           jobresp_pub.publish(job_update);
           Goal.pose.position = lab.pose.position;
         }
-      }
+      }*/
 
       // ELSE ITS AT HOME?
+      Goal.pose.position = lab.pose.position;
     }
 
     // Going to Lab
     if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position == lab.pose.position))
     {
+      //remove from appropriate queue using flag
+      if(high_priority){
+        high_priority_goals.pop_front();
+      } else {
+        low_priority_goals.pop_front();
+      }
+
+      if (high_priority_goals.size() != 0)
+        {
+          Goal = high_priority_goals.front();
+          high_priority=1;
+        }
+        else if (low_priority_goals.size() != 0)
+        {
+          // Set goal point to top of queue
+          Goal = low_priority_goals.front();
+          high_priority=0;
+        }
+        else
+        {
+          // Set goal point to home
+          Goal = home;
+        }
       // check if already completed
-      auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
+      /*auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
       if (it_completed != completed_job_ids.end())
       {
         // If job already completed
@@ -358,7 +390,7 @@ int main(int argc, char **argv)
             // Set goal point to home
           }
         }
-      }
+      }*/
 
       // ELSE ITS AT HOME?
     }
