@@ -34,6 +34,7 @@ std_msgs::String job_update;
 
 geometry_msgs::PoseStamped ward_a;
 geometry_msgs::PoseStamped ward_b;
+geometry_msgs::PoseStamped home;
 geometry_msgs::PoseStamped lab;
 
 // call back when AMCL postion is recieved
@@ -125,18 +126,23 @@ double get_dist(geometry_msgs::Point point_1, geometry_msgs::Point point_2);
 int main(int argc, char **argv)
 {
 
-  ward_a.pose.position.x = 1.0;
-  ward_a.pose.position.y = 2.0;
+  ward_a.pose.position.x = 28.0;
+  ward_a.pose.position.y = 21.0;
 
-  ward_b.pose.position.x = 7.0;
-  ward_b.pose.position.y = 8.0;
+  ward_b.pose.position.x = 20.0;
+  ward_b.pose.position.y = 15.0;
 
-  lab.pose.position.x = 5.0;
-  lab.pose.position.y = 3.0;
+  home.pose.position.x = 12.0;
+  home.pose.position.y = 15.0;
+
+  lab.pose.position.x = 11.0;
+  lab.pose.position.y = 25.0;
 
   locations["Ward A"] = ward_a;
   locations["Ward B"] = ward_b;
   locations["Lab"] = lab;
+
+  
 
   ros::init(argc, argv, "karbot_2dnavgoals");
   ros::NodeHandle n;
@@ -155,11 +161,11 @@ int main(int argc, char **argv)
 
   int index = 0;
   //Wait for AMCL node to publish pose before proceeding
-  // while (!first_pose_loaded)
-  // {
-  //   ROS_WARN_ONCE("Waiting for AMCL");
-  //   ros::spinOnce();
-  // }
+  while (!first_pose_loaded)
+  {
+    ROS_WARN_ONCE("Waiting for AMCL");
+    ros::spinOnce();
+  }
   ROS_WARN_ONCE("AMCL received");
 
   while (!first_message_received)
@@ -170,8 +176,7 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
-    if (Goal.pose.position != lab.pose.position)
-      {
+   
 
         if (high_priority_job_ids.size() != 0)
         {
@@ -202,11 +207,12 @@ int main(int argc, char **argv)
         else
         {
           // Set goal point to home
+          Goal = home;
         }
-      }
+      
 
     // Going to pickup from ward
-    if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position != lab.pose.position))
+    if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position != lab.pose.position) && (Goal.pose.position != home.pose.position))
     {
       // check if already completed
       auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
