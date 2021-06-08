@@ -27,7 +27,7 @@ To use the system the intial postion of the robot must be set in the the AMCL pa
   `<arg name="initial_pose_a" default="0"/>`
   
 This launch file can be found at:\
-`/karbot_ws/src/karbot_navigation/launch/amcl.launch`
+`/karbot_ws/src/karbot_localization/launch/amcl.launch`
 
 In order to set the range of random sampling for the RT-RRT* algorithm, the upper and lower boundaries for the environment in the map frame must be set. This is done by changing the following parameters in karbot_navigation.launch:\
 
@@ -76,7 +76,7 @@ To use the system the intial postion of the robot must be set in the the AMCL pa
   `<arg name="initial_pose_a" default="0"/>`
   
 This launch file can be found at:\
-`/karbot_ws/src/karbot_navigation/launch/amcl.launch`
+`/karbot_ws/src/karbot_localization/launch/amcl.launch`
 
 In order to set the range of random sampling for the RT-RRT* algorithm, the upper and lower boundaries for the environment in the map frame must be set. This is done by changing the following parameters in karbot_navigation.launch:\
 
