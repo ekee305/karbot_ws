@@ -170,39 +170,43 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
-
-    if (high_priority_job_ids.size() != 0)
-    {
-      // Set goal point to top of queue
-      Goal = high_priority_goals.front();
-      if (current_job_id != high_priority_job_ids.front())
+    if (Goal.pose.position != lab.pose.position))
       {
-        current_job_id = high_priority_job_ids.front();
-        // Send job update
-        job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
-        cout << job_update.data << endl;
-        jobresp_pub.publish(job_update);
-      }
-    }
-    else if (low_priority_job_ids.size() != 0)
-    {
-      // Set goal point to top of queue
-      Goal = low_priority_goals.front();
-      if (current_job_id != low_priority_job_ids.front())
-      {
-        current_job_id = low_priority_job_ids.front();
-        // Send job update
-        job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
-        cout << job_update.data << endl;
-        jobresp_pub.publish(job_update);
-      }
-    }
-    else
-    {
-      // Set goal point to home
-    }
 
-    if ((get_dist(Goal.pose.position, position)) < 0.6)
+        if (high_priority_job_ids.size() != 0)
+        {
+          // Set goal point to top of queue
+          Goal = high_priority_goals.front();
+          if (current_job_id != high_priority_job_ids.front())
+          {
+            current_job_id = high_priority_job_ids.front();
+            // Send job update
+            job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+            cout << job_update.data << endl;
+            jobresp_pub.publish(job_update);
+          }
+        }
+        else if (low_priority_job_ids.size() != 0)
+        {
+          // Set goal point to top of queue
+          Goal = low_priority_goals.front();
+          if (current_job_id != low_priority_job_ids.front())
+          {
+            current_job_id = low_priority_job_ids.front();
+            // Send job update
+            job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+            cout << job_update.data << endl;
+            jobresp_pub.publish(job_update);
+          }
+        }
+        else
+        {
+          // Set goal point to home
+        }
+      }
+
+    // Going to pickup from ward
+    if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position != lab.pose.position))
     {
       // check if already completed
       auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
@@ -224,9 +228,10 @@ int main(int argc, char **argv)
           high_priority_goals.pop_front();
           // Send job update
 
-          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Picked up\"}";
           cout << job_update.data << endl;
           jobresp_pub.publish(job_update);
+          Goal.pose.position = lab.pose.position
         }
 
         // if its a low priority job?
@@ -238,9 +243,114 @@ int main(int argc, char **argv)
           low_priority_goals.pop_front();
           // Send job update
 
-          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Picked Up\"}";
           cout << job_update.data << endl;
           jobresp_pub.publish(job_update);
+          Goal.pose.position = lab.pose.position
+        }
+      }
+
+      // ELSE ITS AT HOME?
+    }
+
+    // Going to Lab
+    if ((get_dist(Goal.pose.position, position)) < 0.6 && (Goal.pose.position == lab.pose.position))
+    {
+      // check if already completed
+      auto it_completed = std::find(completed_job_ids.begin(), completed_job_ids.end(), current_job_id);
+      if (it_completed != completed_job_ids.end())
+      {
+        // If job already completed
+      }
+      else
+      {
+        // if job not already completed and update not sent
+
+        // Check if its high priority job or low priority job
+        // if its a high priority job?
+        auto it_high = std::find(high_priority_job_ids.begin(), high_priority_job_ids.end(), current_job_id);
+        if (it_high != high_priority_job_ids.end())
+        {
+
+          // Send job update
+          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Completed\"}";
+          cout << job_update.data << endl;
+          jobresp_pub.publish(job_update);
+
+          // Go to next goal point --- Sorry for the repitition
+          if (high_priority_job_ids.size() != 0)
+          {
+            // Set goal point to top of queue
+            Goal = high_priority_goals.front();
+            if (current_job_id != high_priority_job_ids.front())
+            {
+              current_job_id = high_priority_job_ids.front();
+              // Send job update
+              job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+              cout << job_update.data << endl;
+              jobresp_pub.publish(job_update);
+            }
+          }
+          else if (low_priority_job_ids.size() != 0)
+          {
+            // Set goal point to top of queue
+            Goal = low_priority_goals.front();
+            if (current_job_id != low_priority_job_ids.front())
+            {
+              current_job_id = low_priority_job_ids.front();
+              // Send job update
+              job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+              cout << job_update.data << endl;
+              jobresp_pub.publish(job_update);
+            }
+          }
+          else
+          {
+            // Set goal point to home
+          }
+        }
+
+        // if its a low priority job?
+        auto it_low = std::find(high_priority_job_ids.begin(), high_priority_job_ids.end(), current_job_id);
+        if (it_low != low_priority_job_ids.end())
+        {
+
+          // Send job update
+          job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Completed\"}";
+          cout << job_update.data << endl;
+          jobresp_pub.publish(job_update);
+
+          // Go to next goal point
+          if (high_priority_job_ids.size() != 0)
+          {
+            // Set goal point to top of queue
+            Goal = high_priority_goals.front();
+            if (current_job_id != high_priority_job_ids.front())
+            {
+              current_job_id = high_priority_job_ids.front();
+              // Send job update
+              job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+              cout << job_update.data << endl;
+              jobresp_pub.publish(job_update);
+            }
+          }
+          else if (low_priority_job_ids.size() != 0)
+          {
+            // Set goal point to top of queue
+            Goal = low_priority_goals.front();
+            if (current_job_id != low_priority_job_ids.front())
+            {
+              current_job_id = low_priority_job_ids.front();
+              // Send job update
+              job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"In Progress\"}";
+              cout << job_update.data << endl;
+              jobresp_pub.publish(job_update);
+            }
+          }
+          else
+          {
+            // Set goal point to home
+          }
         }
       }
 
