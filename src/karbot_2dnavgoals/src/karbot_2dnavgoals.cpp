@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
-    if (Goal.pose.position != lab.pose.position))
+    if (Goal.pose.position != lab.pose.position)
       {
 
         if (high_priority_job_ids.size() != 0)
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
           job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Picked up\"}";
           cout << job_update.data << endl;
           jobresp_pub.publish(job_update);
-          Goal.pose.position = lab.pose.position
+          Goal.pose.position = lab.pose.position;
         }
 
         // if its a low priority job?
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
           job_update.data = "{\"job_id\": " + current_job_id + ", " + "\"status\":\"Picked Up\"}";
           cout << job_update.data << endl;
           jobresp_pub.publish(job_update);
-          Goal.pose.position = lab.pose.position
+          Goal.pose.position = lab.pose.position;
         }
       }
 
