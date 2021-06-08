@@ -13,7 +13,7 @@
 
 
   <!-- AMCL -->
-  <include file="$(find karbot_navigation)/launch/amcl.launch"/>	
+  <include file="$(find karbot_localization)/launch/amcl.launch"/>	
   
   <!-- path_planning -->
   <node pkg="path_planning" name="path_planning" type="RT_RRT_Star_In_Hospital" />	
