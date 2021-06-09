@@ -16,7 +16,7 @@
 #include <path_planning/path_to_goal.h>
 
 #define MAX_SPEED 0.2
-#define MAX_ANGULAR_SPEED 3.1
+#define MAX_ANGULAR_SPEED 1.5
 #define PI 3.14159265359
 
 geometry_msgs::Point next_path_point;
