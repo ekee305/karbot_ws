@@ -394,11 +394,11 @@ int main(int argc, char **argv)
   }
   ROS_WARN_ONCE("AMCL received");
 
-  /*while (!first_message_received)
+  while (!first_message_received)
   {
     ROS_WARN_ONCE("Waiting for comms with web interface");
     ros::spinOnce();
-  }*/
+  }
   ros::Duration(10).sleep();
 
   while (ros::ok())
