@@ -126,17 +126,17 @@ double get_dist(geometry_msgs::Point point_1, geometry_msgs::Point point_2);
 int main(int argc, char **argv)
 {
 
-  ward_a.pose.position.x = 5.984;
-  ward_a.pose.position.y = 12.910;
+  ward_a.pose.position.x = 11.195;
+  ward_a.pose.position.y = 17.055;
 
-  ward_b.pose.position.x = 5.583;
-  ward_b.pose.position.y = 11.380;
+  ward_b.pose.position.x = 13.511;
+  ward_b.pose.position.y = 16.8;
 
-  home.pose.position.x = 1.205;
-  home.pose.position.y = 12.322;
+  home.pose.position.x = 12.918;
+  home.pose.position.y = 12.681;
 
-  lab.pose.position.x = 0.988;
-  lab.pose.position.y = 13.492;
+  lab.pose.position.x = 13.729;
+  lab.pose.position.y = 13.247;
 
   locations["Ward A"] = ward_a;
   locations["Ward B"] = ward_b;
