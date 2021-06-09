@@ -1,6 +1,6 @@
 <launch>
 
-  <arg default="$(find map_provider)/maps/c15_new.yaml" name="map_file"/>
+  <arg default="$(find map_provider)/maps/c15_demo.yaml" name="map_file"/>
 
 
   <!-- Run the map server -->

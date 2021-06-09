@@ -967,10 +967,10 @@ int main(int argc, char **argv)
 	goal.y=position.y; 
 
 	// random number limits to match environment size;
-	const double upper_x=18;  
-	const double lower_x=10; 
+	const double upper_x=7;  
+	const double lower_x=0; 
 	const double upper_y=15;
-	const double lower_y=3;  
+	const double lower_y=10;  
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 

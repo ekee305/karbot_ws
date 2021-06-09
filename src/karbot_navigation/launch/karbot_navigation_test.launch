@@ -2,7 +2,7 @@
   <!-- Arguments -->
   <arg name="map_file" default="$(find map_provider)/maps/simple_test_world.yaml"/>
 
-<arg name="open_rviz" default="true"/>
+<arg name="open_rviz" default="false"/>
 
 <!-- Karbot spawn -->
   <include file="$(find karbot_description)/launch/spawn.launch"/>

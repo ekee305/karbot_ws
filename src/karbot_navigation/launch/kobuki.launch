@@ -1,8 +1,8 @@
 <launch>
   <!-- Arguments -->
-  <arg name="map_file" default="$(find map_provider)/maps/c15_new.yaml"/>
+  <arg name="map_file" default="$(find map_provider)/maps/c15_demo.yaml"/>
 
-<arg name="open_rviz" default="true"/>
+<arg name="open_rviz" default="false"/>
 
 <!-- kobuki_setup -->
   <include file="$(find turtlebot_bringup)/launch/minimal.launch"/>

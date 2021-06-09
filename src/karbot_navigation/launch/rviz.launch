@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find karbot_navigation)/rviz/karbot_navigation.rviz"/>
+
+
+	
+
+</launch>
