@@ -3,7 +3,7 @@
   <arg name="scan_topic"     default="scan"/>
   <arg name="initial_pose_x" default="1.205"/>
   <arg name="initial_pose_y" default="12.322"/>
-  <arg name="initial_pose_a" default="0"/>
+  <arg name="initial_pose_a" default="-0.1745"/>
 
   <!-- AMCL -->
   <node pkg="amcl" type="amcl" name="amcl">
