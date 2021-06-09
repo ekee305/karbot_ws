@@ -38,6 +38,6 @@
   <node pkg="motion_controller" name="motion_controller" type="motion_controller_with_amcl" />
 
   <!-- job scheduler -->
-  <!--node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" /-->
+  <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" />
 
 </launch>

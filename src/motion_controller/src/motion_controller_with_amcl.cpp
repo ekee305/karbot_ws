@@ -149,8 +149,8 @@ int main(int argc, char **argv)
     ros::NodeHandle r;
     ros::NodeHandle a;
     geometry_msgs::Twist control_signal;
-    //ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 200);
-    ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel", 200);
+    ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel_mux/input/navi", 200);
+    //ros::Publisher control_pub = r.advertise<geometry_msgs::Twist>("/cmd_vel", 200);
     ros::Subscriber path_sub = n.subscribe("/next_point_on_path", 1000, pathCallback);
     ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1000, amclCallback);
     bool reached_goal = false;

@@ -35,8 +35,8 @@
 
 #define PI 3.14159265
 #define OBSTACLE_THRESHOLD 20.0
-#define GRID_WIDTH 16
-#define GRID_HEIGHT 16
+#define GRID_WIDTH 18
+#define GRID_HEIGHT 18
 #define GRID_RESOLUTION 1
 #define SEARCH_AREA 144
 
@@ -943,7 +943,7 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
-	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
+	ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
 	ros::Rate r(rate);
 
@@ -967,10 +967,10 @@ int main(int argc, char **argv)
 	goal.y=position.y; 
 
 	// random number limits to match environment size;
-	const double upper_x=16;  
-	const double lower_x=8; 
-	const double upper_y=16;
-	const double lower_y=5;  
+	const double upper_x=18;  
+	const double lower_x=10; 
+	const double upper_y=15;
+	const double lower_y=3;  
 	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 

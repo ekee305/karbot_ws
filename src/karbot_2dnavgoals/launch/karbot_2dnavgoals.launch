@@ -1,6 +1,6 @@
 <launch>
 
- <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" />
+ <node pkg="karbot_2dnavgoals" name="karbot_2dnavgoals" type="karbot_2dnavgoals" output="screen" />
 
 </launch>	
 
