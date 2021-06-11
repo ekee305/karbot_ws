@@ -1,6 +1,6 @@
 //Authors: Ethan Kee
 //Date:17/05/2021
-//Description: Implmentation of RT-RRT* to be used within the AWS hospital environment
+//Description: Implmentation of RT-RRT*
 
 
 
@@ -54,12 +54,14 @@ std::random_device rd;
 std::default_random_engine re(rd());
 geometry_msgs::Point goal;
 bool goal_received=false;
-bool debugging=false;
 bool first_pose_loaded=false;
 bool map_loaded_flag=false;
-bool display=false;
 
-//callbacks for when data is received through subscribers 
+
+bool debugging=false; //change for debugging mode
+bool display=false; //change to true to display tree;
+
+//callbacks to load map into node for path planning from costmap2d node
 void chatterCallback(const nav_msgs::OccupancyGrid &msg) 
 {
 	ROS_INFO("number of elements %d", int(msg.data.size()));
@@ -71,6 +73,7 @@ void chatterCallback(const nav_msgs::OccupancyGrid &msg)
 	map_loaded_flag=true;
 }
 
+//callbacks to receive goal from /goal topic
 void goalCallback(const geometry_msgs::PoseStamped &msg) 
 {
 	if(goal.x != msg.pose.position.x || goal.y != msg.pose.position.y){
@@ -80,9 +83,10 @@ void goalCallback(const geometry_msgs::PoseStamped &msg)
 	} 
 }
 
+//callback in order to recieve robot postion from amcl node;
 void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg ) //might be quicker way of loading map by simply equating to data
 {
-	position.x=msg->pose.pose.position.x;
+    position.x=msg->pose.pose.position.x;
     position.y=msg->pose.pose.position.y;
     tf::Quaternion q( msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
     tf::Matrix3x3 m(q);
@@ -91,6 +95,7 @@ void amclCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg 
 
 }
 
+//callback in order to receive updates from costmap node to enable  planning around new obstacles
 void mapUpdateCallback(const map_msgs::OccupancyGridUpdate &msg){
 	if(map_loaded_flag){
 		int k=0;
@@ -108,7 +113,7 @@ struct node
 {
 	int ID;
 	geometry_msgs::Point point; 
-	double cost;
+	double cost;	//cost is distance through tree to node
 	node* parent;
 	std::vector<node*> children;
 };
@@ -125,7 +130,6 @@ private:
 	double grid_resolution;
 	int density;
 
-
 	std::vector<geometry_msgs::Point> path;
 
 
@@ -133,24 +137,25 @@ private:
 
 	node* root;
 	node* goal_node;
-	//lists to store nodes of tree, node_list contains all nodes current in environment
-	std::vector<node*> neighbours;
-	std::vector<node*> node_list;
-	std::vector<node*> goal_list;
-	std::vector<node*> spatial_grid[GRID_WIDTH+1][GRID_HEIGHT+1];
-	std::vector<node*> path_nodes;
-	std::deque<node*> qr;
-	std::deque<node*> qs;
+	//vectores to store nodes,
+	std::vector<node*> neighbours;	//store neighbours to nodes
+	std::vector<node*> node_list;  //node_list contains all nodes current in environment
+	std::vector<node*> goal_list;	//store nodes near goal point
+	std::vector<node*> spatial_grid[GRID_WIDTH+1][GRID_HEIGHT+1]; //used to store nodes in spatial grid
+	std::vector<node*> path_nodes;	//used to store nodes of paths
+	//queues used for rewiring
+	std::deque<node*> qr;//random queue
+	std::deque<node*> qs;//root queue
 	
 	int I;
 	bool goal_found;
 
 
 public:
+	//contructor
 	RT_RRT_Star(double d, double x_start, double y_start, double r,double g_r, double goal_r,int den, double neighbour_r, double rs) : distance (d), map_resolution(r),goal_radius(goal_r), density(den), neighbour_radius(neighbour_r),grid_resolution(g_r),node_dist(rs) {
 		root_point.x=x_start;
 		root_point.y=y_start;		
-		srand((unsigned int)time(NULL));
 		I=0;
 		create_root();
 		goal_found=false;
@@ -188,7 +193,7 @@ public:
 		add_to_spatial_index(new_node);
 		return(new_node);
 	}
-//calculate cost between to reach child node if travelling through parent node
+//calculate cost to reach child node if travelling through parent node
 	double calculate_cost (node* parent_node, node* child_node) //add check if node is in obstacle
 	{
 		double cost;
@@ -214,11 +219,12 @@ public:
 		return(cost);
 	}
 
-// Add child to parents children vector
+// Add child to parent's children vector
 	void update_children(node* parent, node *child) 
 	{
 		parent->children.push_back(child);
 	}
+	
 //remove specified child from parents children vector
 	void remove_child_from_parent(node *child){
 		node* temp_parent=child->parent;
@@ -291,11 +297,12 @@ public:
 		double cost_from_neighbour,total_cost;
 		double lowest_cost=INFINITY;
 		double x_diff,y_diff;
-		find_neighbours(new_point);
+		find_neighbours(new_point); //refresh neighbours vector with neighbours of new_point;
 		node* lowest_cost_neighbour=NULL;
 		for (int i = 0;i<neighbours.size();i++){
 			x_diff=new_point.x-neighbours[i]->point.x;
 			y_diff=new_point.y-neighbours[i]->point.y;
+			//only enter if difference in x and y is less than max distance between nodes to improve efficiency
 			if (abs(x_diff) <= node_dist && abs(y_diff)<=node_dist){
 				cost_from_neighbour=sqrt(pow(y_diff,2)+pow(x_diff,2));
 				if(cost_from_neighbour <= node_dist && !check_line_obstacle(new_point,neighbours[i]->point)){
@@ -321,24 +328,23 @@ public:
 		//check if node now in obstacle
 		if (check_grid_for_obs(find_grid_cell(test_node->point))){
 			test_node->cost=INFINITY;
-			
 			return;
 		}
 
-		find_neighbours(test_node->point);
+		find_neighbours(test_node->point); //refresh neighbours vector
 
 		for (int i = 0; i < neighbours.size();i++){
 			if(get_dist(neighbours[i]->point,test_node->point) < node_dist){	
-				if(neighbours[i]==root){
+				if(neighbours[i]==root){// prevents rewiring of root;
 					continue;
 				}
-				total_cost=calculate_cost(test_node,neighbours[i]);
+				total_cost=calculate_cost(test_node,neighbours[i]);//calulate cost if test_node was taken as parent
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
 					neighbours[i]->parent=test_node;
 					neighbours[i]->cost=total_cost;
 
-					if(!check_qs(neighbours[i])){
+					if(!check_qs(neighbours[i])){//only add to queue if not there
 						add_to_root_queue(neighbours[i]);
 
 					}
@@ -370,14 +376,14 @@ public:
 			return;
 		}
 		double total_cost;
-		find_neighbours(test_node->point);
+		find_neighbours(test_node->point);//refresh neighbours vector
 
 		for (int i = 0;i<neighbours.size();i++){
 			if(get_dist(neighbours[i]->point,test_node->point) < node_dist){	
 				if(neighbours[i]==root){
 					continue;
 				}
-				total_cost=calculate_cost(test_node,neighbours[i]);
+				total_cost=calculate_cost(test_node,neighbours[i]);// caluclate cost if test_node is parent
 				if (total_cost < get_cost(neighbours[i]) && !check_line_obstacle(test_node->point,neighbours[i]->point)){
 					remove_child_from_parent(neighbours[i]);
 					neighbours[i]->parent=test_node;
@@ -409,7 +415,7 @@ public:
 		double x_diff,y_diff;
 		node* nearest_node;
 		//ROS_INFO("1random point is (%lf,%lf)",random_point.x,random_point.y);
-		find_neighbours(random_point);
+		find_neighbours(random_point); //update neighbour vector
 
 
 		for(int i = 0;i<neighbours.size();i++){
@@ -464,8 +470,7 @@ public:
 			}
 			//ROS_INFO("X range (%d,%d)",lower_x_grid,upper_x_grid);
 			//ROS_INFO("Y range (%d,%d)",lower_y_grid,upper_y_grid);
-			
-			for(int i=lower_x_grid;i <= upper_x_grid;i++){
+			for(int i=lower_x_grid;i <= upper_x_grid;i++){//search spatial grid for neighbours
 				for (int j=lower_y_grid;j <=upper_y_grid;j++){
 					//ROS_INFO("Checking grid (%d,%d)",i,j);
 					for(int k=0; k < spatial_grid[i][j].size();k++){
@@ -484,7 +489,7 @@ public:
 		}
 	}
 
-	//function to find grid cell that point lies witn in map based on map resolution
+	//function to find grid cell that point lies in on map based on map resolution
 	path_planning::grid_cell find_grid_cell(geometry_msgs::Point new_point) {
 		path_planning::grid_cell grid;
 		grid.x= int(new_point.x/map_resolution); 
@@ -553,25 +558,24 @@ public:
 			}
 		}
 		
-		//if (goal_node!=old_goal_node){
-			path_cost=goal_node->cost + get_dist(goal_node->point,goal);
-			geometry_msgs::Point temp_point;
-			path.clear();
-			path_nodes.clear();
-			node* node_ptr = goal_node;
+		path_cost=goal_node->cost + get_dist(goal_node->point,goal);
+		geometry_msgs::Point temp_point;
+		path.clear();
+		path_nodes.clear();
+		node* node_ptr = goal_node;
+		temp_point.x=node_ptr->point.x;
+		temp_point.y=node_ptr->point.y;
+		path.push_back(temp_point);//push intial point
+		path_nodes.push_back(node_ptr);
+		while(node_ptr->parent != NULL) //push nodes to path until root of tree is reached
+		{
+			node_ptr=get_parent(node_ptr);
 			temp_point.x=node_ptr->point.x;
 			temp_point.y=node_ptr->point.y;
 			path.push_back(temp_point);
 			path_nodes.push_back(node_ptr);
-			while(node_ptr->parent != NULL) 
-			{
-				node_ptr=get_parent(node_ptr);
-				temp_point.x=node_ptr->point.x;
-				temp_point.y=node_ptr->point.y;
-				path.push_back(temp_point);
-				path_nodes.push_back(node_ptr);
-			}
-		//} 
+		}
+
 		if (debugging){
 			ROS_INFO("I've exited find path");
 		}	
@@ -579,6 +583,7 @@ public:
 
 	}
 
+	//function to print path
 	void print_path() {
 		for(int i = 0; i < path.size(); i++) {
 			ROS_INFO("path (%lf,%lf",path[i].x,path[i].y);
@@ -589,11 +594,13 @@ public:
 	{
 		return(child->parent);
 	}
-
+	
+	//function to get path length
 	int path_length() {
 		return(path.size());
 	}
 
+	//function to get path point at index i
 	geometry_msgs::Point get_path_point(int i) {
 		return(path[i]);
 	}
@@ -759,6 +766,7 @@ public:
 		}
 	}
 
+	//function to get distance between 2 points
 	double get_dist(geometry_msgs:: Point point_1, geometry_msgs::Point point_2){
 		double x_diff;
 		double y_diff;
@@ -789,7 +797,8 @@ public:
 		root_point.y=root->point.y;
 		//rewire_neighbours(root);
 	}
-
+	
+	//function to print next path point
 	void print_next_path_point(){
 		if 	(path.size()==1){
 			ROS_INFO("travelling to point (%lf,%lf)",path[0].x,path[0].y);
@@ -798,6 +807,7 @@ public:
 		}
 	}
 
+	//function to get next path point
 	geometry_msgs::Point get_next_path_point(){
 		geometry_msgs::Point temp_point;
 		if(path.size()!=0){
@@ -807,7 +817,8 @@ public:
 		}
 		return(temp_point);
 	}
-
+	
+	//function to get first path point
 	geometry_msgs::Point get_first_path_point(){
 		geometry_msgs::Point temp_point;
 		if(path.size()!=0){
@@ -817,7 +828,8 @@ public:
 		}
 		return(temp_point);
 	}
-
+	
+	//function to get next path node
 	node* get_next_path_node(){
 		node* temp_node;
 		if (path_nodes.size()==1){
@@ -859,7 +871,7 @@ public:
 		path_cost=INFINITY;
 	}
 
-	//function to control number of time rewiring of random nodes is performed
+	//function to perform rewiring from random root with control over number of times rewiring of random nodes is performed
 	void rewire_random_nodes(){
 		for(int i=0;i<25;i++){
 		if(qr.empty()){
@@ -870,7 +882,7 @@ public:
 		}
 	}
 	
-		//function to control number of time rewiring of root nodes is performed
+	//function to perform rewiring from root with control over number of time rewiring of root nodes is performed
 	void rewire_from_root(){
 		for(int i = 0;i<100;i++){
 			if(qs.empty()){
@@ -880,21 +892,23 @@ public:
 			qs.pop_front();
 		}
 	}
-
+	
+	//function to add node to random queue
 	void add_to_random_queue(node* temp_node){
 		qr.push_back(temp_node);
 	}
 
+	//function to add node to root queue
 	void add_to_root_queue(node* temp_node){
 		qs.push_back(temp_node);
 	}
 
-	//function to clear queue qs
+	//function to clear queue root queue
 	void clear_qs(){
 		qs.clear();
 	}
 
-	//function to determine if provide node is within qs
+	//function to determine if provide node is within root queue
 	bool check_qs(node* temp_node){
 		bool is_in_qs=false;
 		for(int i=0;i<qs.size();i++){
@@ -928,14 +942,17 @@ int main(int argc, char **argv)
 	ros::NodeHandle m;
 	ros::NodeHandle t;
 
-
+	//publisher set up
 	ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 10);
 	ros::Publisher path_pub = p.advertise<geometry_msgs::Point>("/next_point_on_path", 10);
 	ros::Publisher time_pub = t.advertise<std_msgs::Float64>("/time", 10);
-
+	
+	//subsriber update
 	ros::Subscriber sub = nh.subscribe("/global_costmap_node/costmap/costmap", 1, chatterCallback);
 	//ros::Subscriber sub = nh.subscribe("map", 1000, chatterCallback);
 	ros::Subscriber amcl_sub = a.subscribe("/amcl_pose", 1, amclCallback);
+	
+	//change goal sub when wanting to recieve goal from /goal topic like job scheduler
 	//ros::Subscriber goal_sub = g.subscribe("/goal", 1, goalCallback);
 	ros::Subscriber goal_sub = g.subscribe("/move_base_simple/goal", 1, goalCallback);
 	ros::Subscriber map_update_sub = m.subscribe("/global_costmap_node/costmap/costmap_updates", 1, mapUpdateCallback);
@@ -943,7 +960,7 @@ int main(int argc, char **argv)
 
 	path_planning::path_to_goal path_to_publish;
 
-	//waiting ons ubscribers
+	//waiting on subscribers
 	while (!map_loaded_flag){
 		ROS_WARN_ONCE("Waiting for map");
 		ros::spinOnce();
@@ -986,7 +1003,7 @@ int main(int argc, char **argv)
 		lower_y=0;
 	}
 
- 
+ 	//generate uniform distributions for random number generation
  	std::uniform_real_distribution<double> unif_x(lower_x,upper_x);
 	std::uniform_real_distribution<double> unif_y(lower_y,upper_y);
 
@@ -1095,16 +1112,16 @@ int main(int argc, char **argv)
 		end_time = std::chrono::system_clock::now();
 		Elapsed = end_time - start_time;
 		while (Elapsed.count() < 20.0){
-			rand_point=path_planning.get_rand_point(unif_x,unif_y);//get rando point
+			rand_point=path_planning.get_rand_point(unif_x,unif_y);//get random point
 			closest_node=path_planning.find_closest(rand_point); // returns pointer to closest node
 			next_point=path_planning.new_point(closest_node,rand_point); // find point that could be added to tree
-			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get point of last value in node pointer array to check if in obstacle
+			map_array_value=path_planning.convert_grid_cell(path_planning.find_grid_cell(next_point)); // get map postion of next_point to check if in obstacle
 
 			//if statement to implement obstacle avoidance
 			if ((map[map_array_value] < OBSTACLE_THRESHOLD || map[map_array_value] == -1)) {
 
 				lowest_cost_neighbour=path_planning.check_neighbours(next_point); //find nearest suitable neighbour
-				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found							
+				if (lowest_cost_neighbour !=NULL && (path_planning.check_node_density() || path_planning.node_dist_check(next_point,lowest_cost_neighbour))){	//only enter if suitable neighbour found and max node density is not exheeded or node further than node dist							
 					new_node=path_planning.add_node_to_tree(lowest_cost_neighbour,next_point); // add new node to tree with neighbour of least cost as parent
 					path_planning.add_to_random_queue(new_node); // add new node to random tree
 		
@@ -1166,12 +1183,12 @@ int main(int argc, char **argv)
 					}
 					path_to_goal=temp_path;
 					path.points.clear();
+					//add to marker for paths to be displayed on RVIZ
 					for (int i = path_planning.path_length()-2; i >= 0 ;i--){
 							path.points.push_back(path_planning.get_path_point(i));
 							path.points.push_back(path_planning.get_path_point(i+1));	
 							marker_pub.publish(path);
 					}
-					//publsih nect point for motion controller
 
 				} else if (temp_path.size()==1) {
 					path.points.clear();
